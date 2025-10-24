@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id        String        @id @default(cuid())
+  userId    String // The recipient of the notification
+  title     String
+  message   String?
+  type      ActivityType? // e.g., "lead_update", "system_alert", "message"
+  isViewed  Boolean       @default(false)
+  isRead    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  readAt    DateTime?
+
+  generatedById String? // Who triggered the notification (null if system)
+  generatedBy   String?
+
+  // Optional metadata for extensibility
+  meta Json?
+}
+
+enum ActivityType {
+  LEAD_ADDED
+  COMMENT // General text note
+  CALL // Phone call
+  MEETING // In-person meeting
+  TEST_DRIVE // Test drive arranged/completed
+  STATUS_UPDATE // Lead status changed
+  ASSIGNMENT // Lead forwarded / reassigned
+  CALLBACK // Callback scheduled
+  FINANCE // Finance discussion/activity
+  EMAIL // Email sent
+  OTHER // Catch-all
+}

@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id              String       @id
+  dealerId        String? // reference dealerId from user-service
+  assignedToId    String? // reference userId from user-service
+  assignedToName  String? // reference username from user-service
+  name            String
+  email           String?
+  phone           String?
+  alternatePhone  String?
+  oldModel        String?
+  location        String?
+  city            String?
+  leadForwardedTo String[] // array of text
+  testDrive       Boolean      @default(false)
+  finance         Boolean      @default(false)
+  occupation      String?
+  budget          Int?
+  category        LeadCategory @default(COLD) // 👈 NEW FIELD
+  source          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusId     String?
+  status       LeadStatus?     @relation(fields: [statusId], references: [id])
+  lostReasonId String?
+  lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
+
+  Activity Activity[]
+  comments Comment[]
+}
+
+model LeadStatus {
+  id          String           @id
+  name        String           @unique
+  order       Int              @default(0)
+  leads       Lead[]
+  lostReasons LeadLostReason[]
+}
+
+// Dynamic lost reasons linked to lead
+model LeadLostReason {
+  id       String     @id @default(uuid())
+  name     String
+  statusId String // link to LeadStatus
+  status   LeadStatus @relation(fields: [statusId], references: [id])
+  order    Int? // optional, explicitly define order
+
+  leads Lead[]
+}
+
+model Comment {
+  id            String       @id @default(uuid())
+  leadId        String
+  lead          Lead         @relation(fields: [leadId], references: [id])
+  type          ActivityType
+  description   String
+  createdById   String?
+  createdByName String?
+  createdAt     DateTime     @default(now())
+}
+
+model Activity {
+  id     String @id @default(uuid())
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  performedById   String?
+  performedByName String?
+  type            ActivityType
+  description     String?
+
+  oldStatus   String? // snapshot name
+  newStatus   String? // snapshot name
+  oldReason   String? // snapshot name
+  newReason   String? // snapshot name
+  oldAssignee String? // snapshot name
+  newAssignee String? // snapshot name
+
+  dueDate   DateTime?
+  completed Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // one-to-one relation to Task
+  task Task?
+}
+
+model Task {
+  id         String   @id @default(uuid())
+  activityId String   @unique
+  activity   Activity @relation(fields: [activityId], references: [id])
+
+  title          String
+  assignedToId   String?
+  assignedToName String?
+  dueDate        DateTime
+  completed      Boolean  @default(false)
+
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id     String @id @default(uuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id])
+
+  userId  String // who should receive notification
+  message String
+  read    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+enum ActivityType {
+  LEAD_ADDED
+  COMMENT // General text note
+  CALL // Phone call
+  MEETING // In-person meeting
+  TEST_DRIVE // Test drive arranged/completed
+  STATUS_UPDATE // Lead status changed
+  ASSIGNMENT // Lead forwarded / reassigned
+  CALLBACK // Callback scheduled
+  FINANCE // Finance discussion/activity
+  EMAIL // Email sent
+  OTHER // Catch-all
+}
+
+enum LeadCategory {
+  COLD
+  WARM
+  HOT
+}
