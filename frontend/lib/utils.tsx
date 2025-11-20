@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Lead } from "./types"
 import { IconFlame, IconTemperature, IconSnowflake } from "@tabler/icons-react"
-import { avatarBgColors } from "@/app/constants/colors"
+import { avatarBgColors } from "@/app/constants/constants"
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {

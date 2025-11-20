@@ -3,10 +3,10 @@
 import React from "react";
 import { useParams } from "next/navigation";
 import { getActivitiesByLeadId } from "@/features/leads/api/lead";
-import { IconCreditCard, IconFilter, IconSteeringWheel, IconMessage, IconExclamationMark, IconMailForward, IconPhoneOutgoing, IconUserCheck, IconCalendarTime, IconPhoneDone, IconUser, IconAlertCircle, IconUserPlus } from "@tabler/icons-react";
+import { IconCreditCard, IconFilter, IconSteeringWheel, IconMessage, IconExclamationMark, IconMailForward, IconPhoneOutgoing, IconUserCheck, IconCalendarTime, IconPhoneDone, IconUser, IconAlertCircle, IconUserPlus, IconTarget } from "@tabler/icons-react";
 import { Activity } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { activityTypeColors } from "@/app/constants/colors";
+import { activityTypeColors } from "@/app/constants/constants";
 
 // const activityIcons: Record<string, React.ElementType> = {
 //     COMMENT: MessageSquareText,
@@ -28,6 +28,7 @@ const activityIcons: Record<string, React.ElementType> = {
     MEETING: IconCalendarTime,
     TEST_DRIVE: IconSteeringWheel,
     STATUS_UPDATE: IconFilter,
+    CATEGORY_UPDATE: IconTarget,
     ASSIGNMENT: IconUserCheck,
     CALLBACK: IconPhoneOutgoing,
     FINANCE: IconCreditCard,

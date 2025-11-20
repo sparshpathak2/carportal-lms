@@ -2,17 +2,39 @@ import { nanoid } from "nanoid";
 import prisma from "../lib/prisma.js";
 
 // ✅ Get all dealers (with their users)
+// export const getAllDealers = async (req, res) => {
+//     try {
+//         const dealers = await prisma.dealer.findMany({
+//             include: {
+//                 users: {
+//                     include: {
+//                         role: true,
+//                     },
+//                 },
+//             },
+//         });
+//         return res.status(200).json({ success: true, data: dealers });
+//     } catch (err) {
+//         console.error(err);
+//         return res.status(500).json({ success: false, message: "Internal server error" });
+//     }
+// };
+
+// ✅ Get all dealers (with their users, owners, packs)
 export const getAllDealers = async (req, res) => {
     try {
         const dealers = await prisma.dealer.findMany({
             include: {
                 users: {
-                    include: {
-                        role: true,
-                    },
+                    include: { role: true },
                 },
+                owners: {
+                    include: { user: true }, // many-to-many owners
+                },
+                packs: true,
             },
         });
+
         return res.status(200).json({ success: true, data: dealers });
     } catch (err) {
         console.error(err);
@@ -20,21 +42,51 @@ export const getAllDealers = async (req, res) => {
     }
 };
 
+
 // ✅ Get single dealer by ID
+// export const getDealerById = async (req, res) => {
+//     const { id } = req.params;
+//     try {
+//         const dealer = await prisma.dealer.findUnique({
+//             where: { id },
+//             include: {
+//                 users: {
+//                     include: {
+//                         role: true,
+//                     },
+//                 },
+//             },
+//         });
+//         if (!dealer) return res.status(404).json({ success: false, message: "Dealer not found" });
+//         return res.status(200).json({ success: true, data: dealer });
+//     } catch (err) {
+//         console.error(err);
+//         return res.status(500).json({ success: false, message: "Internal server error" });
+//     }
+// };
+
+// ✅ Get dealer by ID (with users, owners, packs)
 export const getDealerById = async (req, res) => {
     const { id } = req.params;
+
     try {
         const dealer = await prisma.dealer.findUnique({
             where: { id },
             include: {
                 users: {
-                    include: {
-                        role: true,
-                    },
+                    include: { role: true },
                 },
+                owners: {
+                    include: { user: true },
+                },
+                packs: true,
             },
         });
-        if (!dealer) return res.status(404).json({ success: false, message: "Dealer not found" });
+
+        if (!dealer) {
+            return res.status(404).json({ success: false, message: "Dealer not found" });
+        }
+
         return res.status(200).json({ success: true, data: dealer });
     } catch (err) {
         console.error(err);
@@ -42,12 +94,17 @@ export const getDealerById = async (req, res) => {
     }
 };
 
+
 // ✅ Create new dealer
 export const createDealer = async (req, res) => {
-    const { name, gstNumber, address } = req.body;
+    const { name, gstNumber, address, city, type } = req.body;
 
     if (!name) {
         return res.status(400).json({ success: false, message: "Name is required" });
+    }
+
+    if (type && !["PREMIUM", "REGULAR"].includes(type)) {
+        return res.status(400).json({ success: false, message: "Invalid dealer type" });
     }
 
     try {
@@ -57,8 +114,11 @@ export const createDealer = async (req, res) => {
                 name,
                 gstNumber,
                 address,
+                city,
+                type: type || "REGULAR",
             },
         });
+
         return res.status(201).json({ success: true, data: dealer });
     } catch (err) {
         console.error(err);
@@ -66,21 +126,30 @@ export const createDealer = async (req, res) => {
     }
 };
 
+
 // ✅ Update dealer by ID
 export const updateDealerById = async (req, res) => {
     const { id } = req.params;
-    const { name, gstNumber, address } = req.body;
+    const { name, gstNumber, address, city, type } = req.body;
 
     try {
         const existingDealer = await prisma.dealer.findUnique({ where: { id } });
-        if (!existingDealer) return res.status(404).json({ success: false, message: "Dealer not found" });
+        if (!existingDealer) {
+            return res.status(404).json({ success: false, message: "Dealer not found" });
+        }
+
+        if (type && !["PREMIUM", "REGULAR"].includes(type)) {
+            return res.status(400).json({ success: false, message: "Invalid dealer type" });
+        }
 
         const updatedDealer = await prisma.dealer.update({
             where: { id },
             data: {
-                name: name || existingDealer.name,
+                name: name ?? existingDealer.name,
                 gstNumber: gstNumber ?? existingDealer.gstNumber,
                 address: address ?? existingDealer.address,
+                city: city ?? existingDealer.city,
+                type: type ?? existingDealer.type,
             },
         });
 
@@ -90,6 +159,7 @@ export const updateDealerById = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
 
 // ✅ Delete dealer by ID
 export const deleteDealerById = async (req, res) => {
@@ -106,18 +176,23 @@ export const deleteDealerById = async (req, res) => {
     }
 };
 
-// ✅ Get all users for a specific dealer
+// ✅ Get all users under a dealer
 export const getUsersByDealerId = async (req, res) => {
     const { id } = req.params;
 
     try {
         const users = await prisma.user.findMany({
             where: { dealerId: id },
-            include: { role: true, dealer: true },
+            include: {
+                role: true,
+                dealer: true,
+            },
         });
+
         return res.status(200).json({ success: true, data: users });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+

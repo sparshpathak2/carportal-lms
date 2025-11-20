@@ -187,7 +187,12 @@ export function LeadStatusModalComponent({
 
                     <DialogFooter className="mt-4">
                         <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                            >
+                                Cancel
+                            </Button>
                         </DialogClose>
                         {/* <Button type="submit">Save changes</Button> */}
                         <Button

@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import * as XLSX from "xlsx"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -16,17 +15,7 @@ import {
 } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
     Table,
@@ -36,44 +25,64 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import toast from "react-hot-toast"
-import { axiosInstance } from "@/lib/axios"
-import { bulkUploadLeads, getLeads } from "@/features/leads/api/lead"
-import { Dialog, DialogTrigger } from "./ui/dialog"
+import { getLeads, getLeadSources, getLeadStatuses } from "@/features/leads/api/lead"
 import { BulkUploadComponent } from "./BulkUploadComponent3"
 import { AddLeadComponent } from "./AddLeadComponent3"
-import { leadCategoryColors, leadStatusColors } from "@/app/constants/colors"
+import { leadCategoryColors, leadStatusColors } from "@/app/constants/constants"
 import { Lead } from "@/lib/types"
 import { useQuery } from "@tanstack/react-query"
 import { renderCategoryIcon } from "@/lib/utils"
-import { IconPlus, IconTarget, IconUpload, IconUserStar } from "@tabler/icons-react"
+import { IconFilter2, IconPlus, IconTarget, IconUpload, IconUserStar } from "@tabler/icons-react"
 import { LeadOwnerModalComponent } from "./LeadOwnerModalComponent"
 import { LeadStatusModalComponent } from "./LeadStatusModalComponent"
+import { CalendarRangeComponent } from "./CalendarRangeComponent"
+import { TableFilterComponent } from "./TableFilterComponent4"
+import { useUserFilters } from "@/hooks/useUserFilters"
+import { SessionContext } from "./SessionProvider"
+import ActiveFilters from "./ActiveFiltersComponent3"
+import { FilterDropdownComponent } from "./FilterDropdownComponent5"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
+import { Checkbox } from "./ui/checkbox"
+
+type Filters = {
+    status?: string[];
+    category?: string[];
+    source?: string[];
+    owner?: string[];
+    dateRange?: {
+        from: Date | null;
+        to: Date | null;
+    };
+};
 
 export const columns: ColumnDef<Lead>[] = [
-    // {
-    //     id: "select",
-    //     header: ({ table }) => (
-    //         <Checkbox
-    //             checked={
-    //                 table.getIsAllPageRowsSelected() ||
-    //                 (table.getIsSomePageRowsSelected() && "indeterminate")
-    //             }
-    //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-    //             aria-label="Select all"
-    //         />
-    //     ),
-    //     cell: ({ row }) => (
-    //         <Checkbox
-    //             checked={row.getIsSelected()}
-    //             onCheckedChange={(value) => row.toggleSelected(!!value)}
-    //             aria-label="Select row"
-    //         />
-    //     ),
-    //     enableSorting: false,
-    //     enableHiding: false,
-    // },
+    {
+        id: "select",
+        header: ({ table }) => (
+            <Checkbox
+                checked={
+                    table.getIsAllPageRowsSelected() ||
+                    (table.getIsSomePageRowsSelected() && "indeterminate")
+                }
+                className="mr-2"
+                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                aria-label="Select all"
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+                className="mr-2"
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
     // {
     //     accessorKey: "status",
     //     header: "Status",
@@ -279,12 +288,9 @@ export const columns: ColumnDef<Lead>[] = [
     // },
 ]
 
-// ✅ Define the exact required columns
-const REQUIRED_COLUMNS = ["name", "email", "phone"]
-
 export function DataTable() {
 
-    // const [leads, setLeads] = useState<Lead[]>([])
+    const { user } = React.useContext(SessionContext)
     const [loading, setLoading] = useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -298,118 +304,234 @@ export function DataTable() {
     const [openAddLeadModal, setOpenAddLeadModal] = useState(false)
     const [isOwnerModalOpen, setOwnerModalOpen] = useState(false)
     const [isStatusModalOpen, setStatusModalOpen] = useState(false)
+    const [isFilterModalOpen, setFilterModalOpen] = useState(false)
+    const [filtersActive, setFiltersActive] = useState<string[]>([])
+    const [globalSearch, setGlobalSearch] = useState("");
+
+    // const [filters, setFilters] = useState<Record<string, string[]>>({})
+    const [filters, setFilters] = useState<Filters>({})
+
+    console.log("filtersActive:", filtersActive)
 
     // ✅ Fetch leads using React Query
-    const { data: leadsData, isLoading, isError, refetch } = useQuery({
-        queryKey: ["leads"],
-        queryFn: getLeads,
-    })
+    // const { data: leadsData, isLoading, isError, refetch } = useQuery({
+    //     queryKey: ["leads"],
+    //     queryFn: getLeads,
+    // })
 
-    // const leads = leadsData?.data || []
-
-    const leads = (leadsData?.data || []).sort((a: Lead, b: Lead) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    const {
+        data: leadsData,
+        isLoading: isLeadsLoading,
+        isError: isLeadsError,
+        refetch: refetchLeads,
+    } = useQuery({
+        queryKey: ["leads"], // 🧩 include filters in query key for auto refetch
+        // queryFn: () => getLeadsWithFilters(filters), // ✅ pass filters to API
+        queryFn: () => getLeads(), // ✅ pass filters to API
+        // enabled: isLoaded, // ✅ wait for filters to load from localStorage
+        // enabled: true,
     });
+
+    const allLeads = leadsData?.data || []
+
+    const {
+        data: leadStatuses,
+        isLoading: isLeadStatusesLoading,
+        isError: isLeadStatusesError,
+        refetch: refetchLeadStatuses,
+    } = useQuery({
+        queryKey: ["leadStatuses"],
+        queryFn: getLeadStatuses,
+    });
+
+    const {
+        data: leadSources,
+        isLoading: isLeadSourcesLoading,
+        isError: isLeadSourcesError,
+        refetch: refetchLeadSources,
+    } = useQuery({
+        queryKey: ["leadSources"],
+        queryFn: getLeadSources,
+    });
+
+    console.log("leadSources:", leadSources)
+
+    // const leads = (leadsData?.data || []).sort((a: Lead, b: Lead) => {
+    //     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    // });
+
+    const filteredLeads = React.useMemo(() => {
+        if (!Array.isArray(allLeads)) return [];
+
+        let results = allLeads;
+
+        // ✅ Filter by Status
+        if (filters.status?.length) {
+            results = results.filter((lead) => {
+                // handle both `lead.status` being object or string
+                const leadStatus = typeof lead.status === "object" ? lead.status.name : lead.status;
+                return filters?.status?.includes(leadStatus);
+            });
+        }
+
+        // ✅ Filter by Category (Hot / Warm / Cold)
+        if (filters.category?.length) {
+            results = results.filter((lead) => {
+                const leadCategory =
+                    typeof lead.category === "object"
+                        ? lead.category.name
+                        : lead.category || "";
+
+                return filters?.category?.includes(leadCategory);
+            });
+        }
+
+        // ✅ Filter by Source (null-safe)
+        if (filters.source?.length) {
+            results = results.filter((lead) =>
+                filters?.source?.includes(lead.source || "Unknown")
+            );
+        }
+
+        // ✅ Filter by Owner
+        if (filters.owner?.length) {
+            results = results.filter((lead) =>
+                filters?.owner?.includes(lead.assignedToName || "")
+            );
+        }
+
+        // ✅ Filter by Date Range
+        if (filters.dateRange?.from || filters.dateRange?.to) {
+            const from = filters.dateRange.from
+                ? new Date(filters.dateRange.from).setHours(0, 0, 0, 0)
+                : null;
+
+            const to = filters.dateRange.to
+                ? new Date(filters.dateRange.to).setHours(23, 59, 59, 999)
+                : null;
+
+            results = results.filter((lead) => {
+                const created = new Date(lead.createdAt).getTime();
+
+                if (from && created < from) return false;
+                if (to && created > to) return false;
+                return true;
+            });
+        }
+
+
+        return results;
+    }, [allLeads, filters, filtersActive]);
+
+
+    const handleFilterChange = (newFilter: Record<string, any>) => {
+        setFilters((prev) => ({ ...prev, ...newFilter }))
+    }
+
+    console.log("filters:", filters)
+
+    // const handleFilterChange = (newFilter: Record<string, any>) => {
+    //     setFilters((prev) => ({
+    //         ...prev,
+    //         ...newFilter,
+    //     }))
+    // }
+
+    const clearAllFilters = () => setFilters({})
 
 
     const table = useReactTable({
-        data: leads,
+        data: filteredLeads,
         columns,
+
+        // 🔹 Sorting / Column filters
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
+
+        // 🔹 Visibility + row selection
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
-        initialState: {
-            pagination: {
-                pageSize: 15,
-            },
-        },
+
+        // 🔹 GLOBAL FILTER HANDLER
+        onGlobalFilterChange: setGlobalSearch,
+
+        // 🔹 Table State
         state: {
             sorting,
             columnFilters,
             columnVisibility,
             rowSelection,
+
+            // 🔹 Add global search value
+            globalFilter: globalSearch,
         },
-    })
 
-    // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     if (e.target.files?.[0]) {
-    //         setFile(e.target.files[0])
-    //     }
-    // }
+        // 🔹 Default pagination
+        initialState: {
+            pagination: {
+                pageSize: 15,
+            },
+        },
 
-    // const handleUpload = async () => {
-    //     if (!file) {
-    //         toast.error("Please select a file first.")
-    //         return
-    //     }
+        // 🔹 Required table models
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
 
-    //     try {
-    //         const data = await file.arrayBuffer()
-    //         const workbook = XLSX.read(data, { type: "array" })
-    //         const sheetName = workbook.SheetNames[0]
-    //         const sheet = workbook.Sheets[sheetName]
+        // 🔥 CUSTOM GLOBAL FILTER FUNCTION
+        globalFilterFn: (row, columnId, filterValue) => {
+            if (!filterValue) return true;
 
-    //         const jsonData: any[] = XLSX.utils.sheet_to_json(sheet)
-    //         console.log("jsonData:", jsonData)
+            const search = String(filterValue).toLowerCase();
+            const lead = row.original;
 
-    //         if (!jsonData.length) {
-    //             toast.error("Sheet is empty!")
-    //             return
-    //         }
+            // Combine searchable fields
+            const searchable = [
+                lead.id || "",
+                lead.email || "",
+                lead.phone || lead.mobile || "",
+                lead.name || "",
+            ]
+                .join(" ")
+                .toLowerCase();
 
-    //         // ✅ Normalize columns for validation
-    //         const sheetColumns = Object.keys(jsonData[0]).map(col => col.toLowerCase())
-    //         const missingCols = REQUIRED_COLUMNS.filter(
-    //             col => !sheetColumns.includes(col.toLowerCase())
-    //         )
-    //         if (missingCols.length > 0) {
-    //             toast.error(`Missing columns: ${missingCols.join(", ")}`)
-    //             return
-    //         }
+            return searchable.includes(search);
+        },
+    });
 
-    //         // ✅ Normalize rows and map to Lead[]
-    //         const validData: Lead[] = jsonData.map((row: any) => {
-    //             const normalizedRow: any = {}
-    //             Object.keys(row).forEach(key => {
-    //                 normalizedRow[key.toLowerCase()] = row[key]
-    //             })
-    //             return {
-    //                 name: normalizedRow.name,
-    //                 email: normalizedRow.email,
-    //                 phone: normalizedRow.phone,
-    //             }
-    //         })
 
-    //         // ✅ Send to backend
-    //         await bulkUploadLeads(validData)
-    //         toast.success("Bulk upload successful!")
-    //     } catch (error: any) {
-    //         console.error(error)
-    //         toast.error(error?.message || "Failed to upload")
-    //     }
-    // }
-
+    const handleFilterSelect = (filterName: string) => {
+        setFiltersActive((prev) =>
+            prev.includes(filterName)
+                ? prev.filter((f) => f !== filterName) // toggle off if already active
+                : [...prev, filterName] // add if not active
+        )
+    }
 
     return (
         <>
-            <div className="w-full">
-                <div className="flex items-center pb-4 gap-2 justify-between">
-                    <Input
-                        placeholder="Filter emails..."
+            <div className="flex flex-col gap-2 w-full">
+                <div className="flex items-center gap-2 justify-between">
+                    {/* <Input
+                        placeholder="Search by email..."
                         value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
                         onChange={(event) =>
                             table.getColumn("email")?.setFilterValue(event.target.value)
                         }
                         className="max-w-sm bg-white h-8"
+                    /> */}
+
+                    <Input
+                        placeholder="Search by Email, Mobile, or ID..."
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        className="max-w-sm bg-white h-8"
                     />
 
+
                     <div className="flex gap-2 items-center">
-                        <div className="hidden sm:flex gap-[-1px]">
+                        {/* <div className="hidden sm:flex gap-[-1px]">
                             <Button
                                 size="sm"
                                 onClick={() => setStatusModalOpen(true)}
@@ -427,7 +549,54 @@ export function DataTable() {
                                 <IconUserStar className="text-white" />
                                 Change Owner
                             </Button>
-                        </div>
+                        </div> */}
+
+                        {/* <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setFilterModalOpen(true)}
+                            className="rounded-full"
+                        >
+                            <IconFilter2 />
+                            Filter
+                        </Button> */}
+
+                        {/* <TableFilterComponent
+                            trigger={<Button
+                                size="sm"
+                                variant="outline"
+                                // onClick={() => setFilterModalOpen(true)}
+                                className="rounded-full"
+                            >
+                                <IconFilter2 />
+                                Filter
+                            </Button>}
+                        /> */}
+
+
+                        <TableFilterComponent
+                            // trigger={
+                            //     <Button size="sm" variant="outline" className="rounded-full">
+                            //         <IconFilter2 />
+                            //         Filter
+                            //     </Button>
+                            // }
+                            onFilterSelect={handleFilterSelect}
+                        />
+
+                        {/* <CalendarRangeComponent /> */}
+
+                        <CalendarRangeComponent
+                            onApply={(range) => {
+                                handleFilterChange({
+                                    dateRange: {
+                                        from: range?.from ? new Date(range.from) : null,
+                                        to: range?.to ? new Date(range.to) : null
+                                    }
+                                })
+                            }}
+                        />
+
 
                         <div className="flex gap-2">
                             <Button size="sm" variant="outline" onClick={() => setOpenUploadModal(true)}>
@@ -448,6 +617,68 @@ export function DataTable() {
                     </div>
 
                 </div>
+
+                {/* <ActiveFilters filters={filters} onRemove={handleRemoveFilter} /> */}
+
+                {/* <ActiveFilters
+                    filters={filters}
+                    onRemove={handleRemoveFilter}
+                    onUpdate={handleUpdateFilter}
+                /> */}
+
+                {/* <FilterDropdownComponent
+                    label="Status"
+                    filterKey="status"
+                    options={["Active", "Inactive", "Pending"]}
+                    selectedValues={filters.status || []}
+                    onChange={applyFilters}
+                // onRemove={removeFilter}
+                /> */}
+
+                <div className="flex gap-2">
+                    {filtersActive.includes("Status") && (
+                        <FilterDropdownComponent
+                            label="Status"
+                            filterKey="status"
+                            // options={["New", "Contacted", "Converted"]}
+                            options={leadStatuses?.data.map((status: any) => status.name) || []}
+                            selectedValues={filters.status || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Category") && (
+                        <FilterDropdownComponent
+                            label="Category"
+                            filterKey="category"
+                            options={["HOT", "WARM", "COLD"]}
+                            selectedValues={filters.category || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Source") && (
+                        <FilterDropdownComponent
+                            label="Source"
+                            filterKey="source"
+                            // options={["Website", "Referral", "Social Media"]}
+                            options={leadSources?.data}
+                            selectedValues={filters.source || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Owner") && (
+                        <FilterDropdownComponent
+                            label="Owner"
+                            filterKey="owner"
+                            options={["Alice", "Bob", "Charlie"]}
+                            selectedValues={filters.owner || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+                </div>
+
 
                 <div className="overflow-hidden rounded-md border bg-white">
                     <Table>
@@ -504,7 +735,7 @@ export function DataTable() {
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
                     {table.getFilteredRowModel().rows.length} row(s) selected.
                 </div> */}
-                    <div className="text-sm"><span className="font-semibold">{leads?.length}</span> result(s)</div>
+                    <div className="text-sm"><span className="font-semibold">{filteredLeads?.length}</span> result(s)</div>
                     <div className="space-x-2">
                         <Button
                             variant="outline"
@@ -525,6 +756,11 @@ export function DataTable() {
                     </div>
                 </div>
             </div>
+
+            {/* <TableFilterComponent
+                open={isFilterModalOpen}
+                onOpenChange={setFilterModalOpen}
+            /> */}
 
             {/* <LeadOwnerModalComponent
                 open={isOwnerModalOpen}

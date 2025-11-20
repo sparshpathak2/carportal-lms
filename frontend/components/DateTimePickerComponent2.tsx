@@ -81,13 +81,13 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
                     </Popover>
 
                     {/* Time Picker */}
-                    <Input
+                    {/* <Input
                         type="time"
                         id="time-picker"
                         value={currentTime}
                         onChange={handleTimeChange}
                         className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-                    />
+                    /> */}
                 </div>
             </div>
         </div>

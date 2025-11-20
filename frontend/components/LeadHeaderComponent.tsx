@@ -1,15 +1,16 @@
 "use client"
 
-import { leadCategoryColors, leadStatusColors } from "@/app/constants/colors"
+import { leadCategoryColors, leadStatusColors } from "@/app/constants/constants"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dealer, Lead, LeadLostReason, LeadStatus, User } from "@/lib/types"
 import { renderCategoryIcon } from "@/lib/utils"
-import { IconCalendarPlus, IconFlame, IconPhone, IconSnowflake, IconTarget, IconTemperature, IconUserStar } from "@tabler/icons-react"
+import { IconCalendarPlus, IconFilter, IconPhone, IconTarget, IconUserStar } from "@tabler/icons-react"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { LeadOwnerModalComponent } from "./LeadOwnerModalComponent"
 import { LeadStatusModalComponent } from "./LeadStatusModalComponent"
+import { LeadCategoryModalComponent } from "./LeadCategoryModalComponent"
 
 type LeadHeaderProps = {
     lead: Lead
@@ -27,6 +28,7 @@ type LeadHeaderProps = {
 export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostReasons, updateLeadMutation, users, dealers }: LeadHeaderProps) {
     const [isOwnerModalOpen, setOwnerModalOpen] = useState(false)
     const [isStatusModalOpen, setStatusModalOpen] = useState(false)
+    const [isCategoryModalOpen, setCategoryModalOpen] = useState(false)
 
     const status = lead?.status?.name || "NA"
     const leadStatusClass = leadStatusColors[status] || "bg-gray-100 text-gray-800 border border-gray-300"
@@ -84,24 +86,71 @@ export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostR
                             </div>
                         </div>
 
+                        {/* <div className="flex gap-2">
+
+                            <div className="flex gap-[-1px]">
+                                <Button
+                                    size="sm"
+                                    onClick={() => setStatusModalOpen(true)}
+                                    className="rounded-r-none"
+                                >
+                                    <IconFilter className="text-white" />
+                                    Status
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setCategoryModalOpen(true)}
+                                    // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
+                                    className="rounded-l-none border-l-1 border-l-white"
+                                >
+                                    <IconTarget className="text-white" />
+                                    Category
+                                </Button>
+                            </div>
+
+                            <Button
+                                size="sm"
+                                onClick={() => setOwnerModalOpen(true)}
+                                // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
+                                className=""
+                            >
+                                <IconUserStar className="text-white" />
+                                Owner
+                            </Button>
+
+                        </div> */}
                         <div className="flex gap-[-1px]">
+
+                            {/* <div className="flex gap-[-1px]"> */}
                             <Button
                                 size="sm"
                                 onClick={() => setStatusModalOpen(true)}
                                 className="rounded-r-none"
                             >
-                                <IconTarget className="text-white" />
-                                Change Status
+                                <IconFilter className="text-white" />
+                                Status
                             </Button>
+                            <Button
+                                size="sm"
+                                onClick={() => setCategoryModalOpen(true)}
+                                // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
+                                className="rounded-none border-x-1 border-l-white"
+                            >
+                                <IconTarget className="text-white" />
+                                Category
+                            </Button>
+                            {/* </div> */}
+
                             <Button
                                 size="sm"
                                 onClick={() => setOwnerModalOpen(true)}
                                 // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
-                                className="rounded-l-none border-l-1 border-l-white"
+                                className="rounded-l-none"
                             >
                                 <IconUserStar className="text-white" />
-                                Change Owner
+                                Owner
                             </Button>
+
                         </div>
                     </div>
                 </div>
@@ -118,6 +167,15 @@ export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostR
             <LeadStatusModalComponent
                 open={isStatusModalOpen}
                 onOpenChange={setStatusModalOpen}
+                lead={lead}
+                statuses={statuses}
+                lostReasons={lostReasons}
+                isSaving={updateLeadMutation.isPending}
+                updateLeadMutation={updateLeadMutation}
+            />
+            <LeadCategoryModalComponent
+                open={isCategoryModalOpen}
+                onOpenChange={setCategoryModalOpen}
                 lead={lead}
                 statuses={statuses}
                 lostReasons={lostReasons}

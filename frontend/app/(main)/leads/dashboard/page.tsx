@@ -7,7 +7,7 @@ import LeadDetailsForm from '@/components/LeadDetailsComponent'
 import LeadActivityComponent from '@/components/LeadActivityComponent'
 import LeadHeader from '@/components/LeadHeaderComponent'
 import { Loader2, CircleAlert } from 'lucide-react'
-import { avatarBgColors } from '@/app/constants/colors'
+import { avatarBgColors } from '@/app/constants/constants'
 import { Lead, LeadStatus } from '@/lib/types'
 import MetricCardsComponent from '@/components/MetricCardsComponent'
 import { ChartAreaLinear } from '@/components/Charts/AreaChart'
@@ -107,14 +107,17 @@ export default function LeadDetailPage() {
     const lostReasons = lostStatus?.lostReasons || []
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] p-4 gap-4">
+        // <div className="flex flex-col h-[calc(100vh-64px)] p-8 gap-4">
+        <div className="flex flex-col p-4 gap-4">
 
             <MetricCardsComponent
                 leads={leads}
             />
 
-            <div className="flex flex-1 flex-col gap-4 overflow-hidden w-full">
-                <div className="w-full h-full">
+            {/* <div className="flex flex-1 flex-col gap-4 overflow-hidden w-full"> */}
+            <div className="flex flex-1 flex-col gap-4 w-full">
+                {/* <div className="w-full h-full"> */}
+                <div className="w-full h-[480px]">
                     <ChartAreaLinear />
                 </div>
 
@@ -123,14 +126,18 @@ export default function LeadDetailPage() {
                 </div> */}
             </div>
 
-            <div className="flex flex-1 flex-col sm:flex-row gap-4 overflow-hidden">
-                <div className="w-full sm:w-1/3 h-full">
+            {/* <div className="flex flex-1 flex-col sm:flex-row gap-4 overflow-hidden"> */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                {/* <div className="w-full sm:w-1/3 h-full"> */}
+                <div className="w-full sm:w-1/3">
                     <ChartPieLabelCustom />
                 </div>
-                <div className='w-full sm:w-1/3 h-full'>
+                {/* <div className='w-full sm:w-1/3 h-full'> */}
+                <div className='w-full sm:w-1/3'>
                     <ChartPieLabelCustom />
                 </div>
-                <div className="w-full sm:w-1/3 h-full overflow-y-auto">
+                {/* <div className="w-full sm:w-1/3 h-full overflow-y-auto"> */}
+                <div className="w-full sm:w-1/3">
                     <ChartAreaLinear />
                 </div>
             </div>

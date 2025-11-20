@@ -199,3 +199,9 @@
 html {
   font-size: 15px; /* custom font size */
 }
+
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* ❗ stop page scroll */
+}

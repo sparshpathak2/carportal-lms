@@ -22,25 +22,43 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // relations
-  dealerId String? // nullable → super admins may not belong to a dealer
+  // user belongs to exactly 1 dealer
+  dealerId String?
   dealer   Dealer? @relation(fields: [dealerId], references: [id])
 
+  // User Role
   roleId String
   role   Role   @relation(fields: [roleId], references: [id])
+
+  // lead assignment target for the user
+  leadTarget Int?
+
+  // Dealers this user owns (many-to-many)
+  ownerOf DealerOwner[]
 
   sessions Session[]
 }
 
 model Dealer {
-  id        String   @id
+  id        String     @id
   name      String
   gstNumber String?
+  city      String?
   address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  type      DealerType @default(REGULAR)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   users User[]
+  packs Pack[]
+
+  // Users who own this dealer
+  owners DealerOwner[]
+}
+
+enum DealerType {
+  PREMIUM
+  REGULAR
 }
 
 model Role {
@@ -49,17 +67,30 @@ model Role {
   users User[]
 }
 
-// model UserRole {
-//   // id       String  @id @default(uuid())
-//   id       String  @id
-//   userId   String
-//   roleId   String
-//   dealerId String?
+model DealerOwner {
+  id String @id @default(uuid())
 
-//   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   role   Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
-//   dealer Dealer? @relation(fields: [dealerId], references: [id])
-// }
+  userId   String
+  dealerId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealer Dealer @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Pack {
+  id             String   @id @default(uuid())
+  name           String
+  targetLeads    Int
+  packCost       Float // ⭐ ADDED FIELD
+  cycleStartDate DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  dealerId String
+  dealer   Dealer @relation(fields: [dealerId], references: [id])
+}
 
 model Session {
   id        String   @id @default(uuid())

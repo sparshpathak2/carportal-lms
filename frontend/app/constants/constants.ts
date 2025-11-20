@@ -44,6 +44,7 @@ export const activityTypeColors: Record<string, string> = {
     "MEETING": "bg-pink-100 text-pink-800 border border-pink-300",
     "TEST_DRIVE": "bg-yellow-100 text-yellow-800 border border-yellow-300",
     "STATUS_UPDATE": "bg-orange-100 text-orange-800 border border-orange-300",
+    "CATEGORY_UPDATE": "bg-amber-100 text-amber-800 border border-amber-300",
     "ASSIGNMENT": "bg-indigo-100 text-indigo-800 border border-indigo-300",
     "CALLBACK": "bg-green-100 text-green-800 border border-green-300",
     "FINANCE": "bg-red-100 text-red-800 border border-red-300",
@@ -74,3 +75,4 @@ export const avatarBgColors = [
 //   OTHER: "bg-gray-100 text-gray-600",
 // };
 
+export const leadCategory = ["COLD", "WARM", "HOT"]

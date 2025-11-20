@@ -1,6 +1,8 @@
 import { axiosInstance } from "@/lib/axios";
 import { Activity, ActivityType } from "@/lib/types";
 
+// -------------------- LEADS --------------------
+
 // Create a new lead
 export const createLead = async (data: {
   dealerId?: string;
@@ -31,6 +33,15 @@ export const getLeads = async () => {
   return res.data;
 };
 
+export const getLeadsWithFilters = async (filters?: Record<string, any>) => {
+  const queryParams = filters
+    ? new URLSearchParams(filters as any).toString()
+    : "";
+  const res = await axiosInstance.get(`/lead/leads${queryParams ? `?${queryParams}` : ""}`);
+  return res.data;
+};
+
+
 // Get a single lead by ID
 export const getLeadById = async (id: string) => {
   const res = await axiosInstance.get(`/lead/leads/${id}`);
@@ -56,7 +67,7 @@ export const bulkUploadLeads = async (data: any[]) => {
 };
 
 
-// Acivity by lead Id
+// -------------------- ACTIVITIES --------------------
 
 // Fetch activities by lead ID
 export const getActivitiesByLeadId = async (leadId: string) => {
@@ -66,6 +77,16 @@ export const getActivitiesByLeadId = async (leadId: string) => {
   return res.data;
 };
 
+// -------------------- SOURCES --------------------
+
+// Fetch distinct lead sources
+export const getLeadSources = async () => {
+  const res = await axiosInstance.get("/lead/leads/sources");
+  return res.data;
+};
+
+
+// -------------------- STATUSES --------------------
 
 // Fetch all statuses
 export const getLeadStatuses = async () => {
@@ -97,7 +118,7 @@ export const deleteLeadStatus = async (id: string) => {
   return res.data;
 };
 
-// ---- Comments ----
+// -------------------- COMMENTS --------------------
 
 // Fetch comments by lead ID
 export const getCommentsByLeadId = async (leadId: string) => {
@@ -139,4 +160,30 @@ export const deleteComment = async (id: string) => {
     `/lead/comments/${id}`
   );
   return res.data;
+};
+
+
+// -------------------- USER FILTERS --------------------
+
+// Save user filters for the "leads" dashboard
+export const saveUserFilters = async (filters: Record<string, any>) => {
+  const res = await axiosInstance.post("/filters/save", {
+    type: "leads",
+    filters,
+  });
+  return res.data;
+};
+
+// Get user filters for the "leads" dashboard
+export const getUserFilters = async () => {
+  const res = await axiosInstance.get("/filters/get?type=leads");
+  return res.data;
+};
+
+// Combined utility: get saved filters and then fetch leads
+export const getLeadsWithUserFilters = async () => {
+  const saved = await getUserFilters();
+  const filters = saved?.data || {};
+  const leads = await getLeadsWithFilters(filters);
+  return { filters, leads };
 };

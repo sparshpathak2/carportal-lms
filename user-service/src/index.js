@@ -6,6 +6,7 @@ import "dotenv/config";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import dealerRoutes from "./routes/dealer.routes.js";
+import packRoutes from "./routes/pack.routes.js";
 import { attachUser } from "./middlewares/attachuser.middleware.js";
 
 const app = express();
@@ -30,6 +31,7 @@ app.use(attachUser); // ✅ before routes
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/dealers", dealerRoutes);
+app.use("/packs", packRoutes);
 
 // Health check (for gateway, monitoring, etc.)
 app.get("/health", (req, res) => {

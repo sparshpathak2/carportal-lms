@@ -36,15 +36,21 @@ import { axiosInstance } from "@/lib/axios"
 import { useRouter } from "next/navigation"
 
 export function NavUser() {
-    const { user, loading } = useContext(SessionContext)
+    const { user, loading, refreshSession } = useContext(SessionContext)
     const { isMobile } = useSidebar()
     const router = useRouter()
 
     const handleLogout = async () => {
         try {
             await axiosInstance.post("/user/auth/logout", {}, { withCredentials: true })
-            // await refreshSession() // clears the user in context
-            router.replace("/login") // redirect to login page
+
+            // Clear localStorage
+            localStorage.clear()
+
+            // Immediately clear user from context (prevents flash)
+            await refreshSession() // or setUser(null) if exposed from context (THIS FIXES THE FLASHING ON LOGOUT ISSUE)
+
+            router.replace("/login")
         } catch (err) {
             console.error("Logout failed", err)
         }

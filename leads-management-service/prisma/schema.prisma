@@ -14,11 +14,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// model Lead {
+//   id              String       @id
+//   dealerId        String? // reference dealerId from user-service
+//   assignedToId    String? // reference userId from user-service
+//   assignedToName  String? // reference username from user-service
+//   name            String
+//   email           String?
+//   phone           String?
+//   alternatePhone  String?
+//   oldModel        String?
+//   location        String?
+//   city            String?
+//   leadForwardedTo String[] // array of text
+//   testDrive       Boolean      @default(false)
+//   finance         Boolean      @default(false)
+//   occupation      String?
+//   budget          Int?
+//   category        LeadCategory @default(COLD) // 👈 NEW FIELD
+//   source          String?
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   statusId     String?
+//   status       LeadStatus?     @relation(fields: [statusId], references: [id])
+//   lostReasonId String?
+//   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
+
+//   Activity Activity[]
+//   comments Comment[]
+// }
+
 model Lead {
-  id              String       @id
-  dealerId        String? // reference dealerId from user-service
-  assignedToId    String? // reference userId from user-service
-  assignedToName  String? // reference username from user-service
+  id             String  @id
+  dealerId       String? // reference dealerId from user-service
+  assignedToId   String? // reference userId from user-service
+  assignedToName String? // reference username from user-service
+
   name            String
   email           String?
   phone           String?
@@ -27,23 +60,37 @@ model Lead {
   location        String?
   city            String?
   leadForwardedTo String[] // array of text
-  testDrive       Boolean      @default(false)
-  finance         Boolean      @default(false)
-  occupation      String?
-  budget          Int?
-  category        LeadCategory @default(COLD) // 👈 NEW FIELD
-  source          String?
+
+  testDrive  Boolean @default(false)
+  finance    Boolean @default(false)
+  occupation String?
+  budget     Int?
+
+  category LeadCategory @default(COLD)
+  source   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  statusId     String?
-  status       LeadStatus?     @relation(fields: [statusId], references: [id])
+  statusId String?
+  status   LeadStatus? @relation(fields: [statusId], references: [id])
+
   lostReasonId String?
   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
 
   Activity Activity[]
   comments Comment[]
+
+  // ------------------------------------------------------------
+  // 🎯 NEW FIELDS FOR FACEBOOK MARKETING HIERARCHY
+  // ------------------------------------------------------------
+  adId       String? // Facebook ad_id
+  adsetId    String? // Facebook adset_id
+  campaignId String? // Facebook campaign_id
+
+  adName       String? // Facebook ad name
+  adsetName    String? // Facebook ad set name
+  campaignName String? // Facebook campaign name
 }
 
 model LeadStatus {
@@ -63,6 +110,17 @@ model LeadLostReason {
   order    Int? // optional, explicitly define order
 
   leads Lead[]
+}
+
+model UserFilter {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // e.g. "leads", "tickets", "customers"
+  filters   Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId, type]) // Each user has 1 filter per dashboard type
 }
 
 model Comment {
@@ -88,6 +146,8 @@ model Activity {
 
   oldStatus   String? // snapshot name
   newStatus   String? // snapshot name
+  oldCategory String? // snapshot name
+  newCategory String? // snapshot name
   oldReason   String? // snapshot name
   newReason   String? // snapshot name
   oldAssignee String? // snapshot name
@@ -132,6 +192,44 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+// model FbPageToken {
+//   pageId    String   @id
+//   token     String
+//   expiresAt DateTime
+// }
+
+// model FbUserToken {
+//   userId    String   @id
+//   token     String
+//   expiresAt DateTime
+// }
+
+// add to schema.prisma
+model FbUserToken {
+  id           String        @id @default(uuid())
+  // identifies which business user or admin this token belongs to; optional
+  // userId       String?
+  token        String
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  fbPageTokens FbPageToken[]
+}
+
+model FbPageToken {
+  id          String       @id @default(uuid())
+  pageId      String       @unique
+  pageName    String?
+  accessToken String
+  // keep reference to which user token was used to generate this
+  userTokenId String?
+  userToken   FbUserToken? @relation(fields: [userTokenId], references: [id])
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum ActivityType {
   LEAD_ADDED
   COMMENT // General text note
@@ -139,6 +237,7 @@ enum ActivityType {
   MEETING // In-person meeting
   TEST_DRIVE // Test drive arranged/completed
   STATUS_UPDATE // Lead status changed
+  CATEGORY_UPDATE // Lead Category changed
   ASSIGNMENT // Lead forwarded / reassigned
   CALLBACK // Callback scheduled
   FINANCE // Finance discussion/activity

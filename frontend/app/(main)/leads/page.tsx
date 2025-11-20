@@ -1,73 +1,627 @@
-import { DataTable } from "@/components/DataTable"
-// import { DataTable } from "@/components/DataTable2"
+'use client'
+
+import { leadCategoryColors, leadStatusColors } from "@/app/constants/constants"
+import { DataTable } from "@/components/DataTableNew"
+import { FilterDropdownComponent } from "@/components/FilterDropdownComponent5"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { getLeads, getLeadSources, getLeadStatuses } from "@/features/leads/api/lead"
+import { Lead } from "@/lib/types"
+import { renderCategoryIcon } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
+import { TableFilterComponent } from "@/components/TableFilterComponent4"
+import { CalendarRangeComponent } from "@/components/CalendarRangeComponent"
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { IconPlus, IconUpload } from "@tabler/icons-react"
+import { BulkUploadComponent } from "@/components/BulkUploadComponent3"
+import { AddLeadComponent } from "@/components/AddLeadComponent3"
 
-export type Payment = {
-    id: string
-    amount: number
-    status: "pending" | "processing" | "success" | "failed"
-    email: string
-}
+type Filters = {
+    status?: string[];
+    category?: string[];
+    source?: string[];
+    owner?: string[];
+    dateRange?: {
+        from: Date | null;
+        to: Date | null;
+    };
+};
 
-const payments: Payment[] = [
-    { id: "m5gr84i9", amount: 316, status: "success", email: "ken99@example.com" },
-    { id: "3u1reuv4", amount: 242, status: "success", email: "Abe45@example.com" },
-    { id: "derv1ws0", amount: 837, status: "processing", email: "Monserrat44@example.com" },
-    { id: "5kma53ae", amount: 874, status: "success", email: "Silas22@example.com" },
-    { id: "bhqecj4p", amount: 721, status: "failed", email: "carmella@example.com" },
-    { id: "a1bc23d4", amount: 150, status: "success", email: "liam.j@example.com" },
-    { id: "b2cd34e5", amount: 499, status: "failed", email: "sophia.w@example.com" },
-    { id: "c3de45f6", amount: 1200, status: "processing", email: "ethan.m@example.com" },
-    { id: "d4ef56g7", amount: 640, status: "success", email: "ava.r@example.com" },
-    { id: "e5fg67h8", amount: 305, status: "success", email: "noah.p@example.com" },
-    { id: "f6gh78i9", amount: 760, status: "failed", email: "isabella.k@example.com" },
-    { id: "g7hi89j0", amount: 980, status: "success", email: "oliver.l@example.com" },
-    { id: "h8ij90k1", amount: 420, status: "processing", email: "mia.d@example.com" },
-    { id: "i9jk01l2", amount: 110, status: "success", email: "lucas.h@example.com" },
-    { id: "j0kl12m3", amount: 845, status: "failed", email: "amelia.z@example.com" },
-    { id: "k1lm23n4", amount: 1330, status: "success", email: "james.c@example.com" },
-    { id: "l2mn34o5", amount: 290, status: "processing", email: "harper.t@example.com" },
-    { id: "m3no45p6", amount: 720, status: "success", email: "benjamin.u@example.com" },
-    { id: "n4op56q7", amount: 415, status: "failed", email: "evelyn.b@example.com" },
-    { id: "o5pq67r8", amount: 910, status: "success", email: "henry.g@example.com" },
-    { id: "p6qr78s9", amount: 550, status: "success", email: "ella.j@example.com" },
-    { id: "q7rs89t0", amount: 250, status: "processing", email: "william.v@example.com" },
-    { id: "r8st90u1", amount: 1280, status: "success", email: "chloe.n@example.com" },
-    { id: "s9tu01v2", amount: 690, status: "failed", email: "daniel.s@example.com" },
-    { id: "t0uv12w3", amount: 360, status: "success", email: "aria.f@example.com" },
-    { id: "u1vw23x4", amount: 775, status: "processing", email: "jackson.o@example.com" },
-    { id: "v2wx34y5", amount: 1440, status: "success", email: "scarlett.m@example.com" },
-    { id: "w3xy45z6", amount: 530, status: "failed", email: "michael.q@example.com" },
-    { id: "x4yz56a7", amount: 870, status: "success", email: "sofia.r@example.com" },
-    { id: "y5za67b8", amount: 310, status: "processing", email: "alexander.k@example.com" },
-];
+export const columns: ColumnDef<Lead>[] = [
+    // {
+    //     id: "select",
+    //     header: ({ table }) => (
+    //         <Checkbox
+    //             checked={
+    //                 table.getIsAllPageRowsSelected() ||
+    //                 (table.getIsSomePageRowsSelected() && "indeterminate")
+    //             }
+    //             className="mr-2"
+    //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+    //             aria-label="Select all"
+    //         />
+    //     ),
+    //     cell: ({ row }) => (
+    //         <Checkbox
+    //             checked={row.getIsSelected()}
+    //             onCheckedChange={(value) => row.toggleSelected(!!value)}
+    //             aria-label="Select row"
+    //             className="mr-2"
+    //         />
+    //     ),
+    //     enableSorting: false,
+    //     enableHiding: false,
+    // },
+    // {
+    //     accessorKey: "status",
+    //     header: "Status",
+    //     cell: ({ row }) => (
+    //         <div className="capitalize">{row.getValue("status")}</div>
+    //     ),
+    // },
+    // {
+    //     accessorKey: "email",
+    //     header: ({ column }) => {
+    //         return (
+    //             <Button
+    //                 variant="ghost"
+    //                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //             >
+    //                 Email
+    //                 <ArrowUpDown />
+    //             </Button>
+    //         )
+    //     },
+    //     cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    // },
+    // {
+    //     accessorKey: "amount",
+    //     header: () => <div className="text-right">Amount</div>,
+    //     cell: ({ row }) => {
+    //         const amount = parseFloat(row.getValue("amount"))
 
-const columns: ColumnDef<Payment>[] = [
+    //         // Format the amount as a dollar amount
+    //         const formatted = new Intl.NumberFormat("en-US", {
+    //             style: "currency",
+    //             currency: "USD",
+    //         }).format(amount)
+
+    //         return <div className="text-right font-medium">{formatted}</div>
+    //     },
+    // },
     {
-        accessorKey: "status",
-        header: "Status",
+        id: "serial",
+        header: "No",
+        cell: ({ row }) => row.index + 1, // ✅ row.index starts from 0
+        enableSorting: false,
+        enableHiding: false,
+    },
+    {
+        accessorKey: "id",
+        header: "Lead Id",
+        cell: ({ row }) => (
+            <div className="">{row.getValue("id")}</div>
+        ),
+
+    },
+    // {
+    //     accessorKey: "name",
+    //     header: "Name",
+    //     cell: ({ row }) => (
+    //         <div className="">{row.getValue("name")}</div>
+    //     ),
+
+    // },
+    {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) => {
+            const leadId = row.original.id // ✅ make sure id exists in Lead type
+            const leadName = row.getValue("name") as string
+
+            return (
+                <a
+                    href={`/leads/${leadId}`}
+                    className="text-blue-600 hover:underline"
+                >
+                    {leadName}
+                </a>
+            )
+        },
     },
     {
         accessorKey: "email",
         header: "Email",
+        cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
     },
     {
-        accessorKey: "amount",
-        header: "Amount",
+        accessorKey: "phone",
+        header: "Phone",
+        cell: ({ row }) => <div className="lowercase">{row.getValue("phone")}</div>
     },
+    {
+        accessorKey: "assignedToName",
+        header: "Owner",
+        cell: ({ row }) => {
+            const assignedToName = row.getValue("assignedToName") as string;
+
+            return (
+                <span className="text-gray-700 font-medium">
+                    {assignedToName || "-"}
+                </span>
+            );
+        },
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+            const status = row.getValue("status") as { name: string } | null;
+            const statusName = status?.name ?? "NA";
+            const colorClass = leadStatusColors[statusName] || "bg-gray-100 text-gray-700";
+
+            return (
+                <Badge className={`capitalize ${colorClass}`}>
+                    {statusName}
+                </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: "category",
+        header: "Category",
+        cell: ({ row }) => {
+            const lead = row.original; // full row data
+            const category = row.getValue("category") as string;
+            const colorClass =
+                leadCategoryColors[category] || "bg-gray-100 text-gray-700";
+
+            return (
+                <Badge className={`capitalize flex items-center gap-1 ${colorClass}`}>
+                    {renderCategoryIcon(lead)}
+                    {category || "-"}
+                </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: "source",
+        header: "Source",
+        cell: ({ row }) => {
+            const source = row.getValue("source") as string;
+
+            return (
+                <span className="text-gray-700 font-medium">
+                    {source || "-"}
+                </span>
+            );
+        },
+    },
+    // {
+    //     accessorKey: "statusId",
+    //     header: "Status",
+    //     cell: ({ row }) => <div className="capitalize">{row.getValue("statusId")}</div>,
+    // },
+
+    {
+        accessorKey: "createdAt",
+        header: "Date Created",
+        cell: ({ row }) => {
+            const date = row.getValue("createdAt") as string | Date | null
+
+            if (!date) return <span>NA</span>
+
+            let formatted = new Intl.DateTimeFormat("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            }).format(new Date(date))
+
+            // ✅ Force AM/PM to uppercase
+            formatted = formatted.replace(/am|pm/, (match) => match.toUpperCase())
+
+            return <div className="whitespace-nowrap">{formatted}</div>
+        },
+    },
+    // {
+    //     id: "actions",
+    //     enableHiding: false,
+    //     cell: ({ row }) => {
+    //         const payment = row.original
+
+    //         return (
+    //             <DropdownMenu>
+    //                 <DropdownMenuTrigger asChild>
+    //                     <Button variant="ghost" className="h-8 w-8 p-0">
+    //                         <span className="sr-only">Open menu</span>
+    //                         <MoreHorizontal />
+    //                     </Button>
+    //                 </DropdownMenuTrigger>
+    //                 <DropdownMenuContent align="end">
+    //                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+    //                     <DropdownMenuItem
+    //                     // onClick={() => navigator.clipboard.writeText(payment.id)}
+    //                     >
+    //                         Copy payment ID
+    //                     </DropdownMenuItem>
+    //                     <DropdownMenuSeparator />
+    //                     <DropdownMenuItem>View customer</DropdownMenuItem>
+    //                     <DropdownMenuItem>View payment details</DropdownMenuItem>
+    //                 </DropdownMenuContent>
+    //             </DropdownMenu>
+    //         )
+    //     },
+    // },
 ]
 
 export default function Page() {
+    const [filters, setFilters] = useState<Filters>({})
+    const [filtersActive, setFiltersActive] = useState<string[]>([])
+    const [openUploadModal, setOpenUploadModal] = useState(false)
+    const [openAddLeadModal, setOpenAddLeadModal] = useState(false)
+    // const [isOwnerModalOpen, setOwnerModalOpen] = useState(false)
+    // const [isStatusModalOpen, setStatusModalOpen] = useState(false)
+    // const [isFilterModalOpen, setFilterModalOpen] = useState(false)
+    const [globalSearch, setGlobalSearch] = useState("");
+    const [activeTab, setActiveTab] = useState<"all_leads" | "unattended" | "pending_approval">(
+        "all_leads"
+    )
+
+    const {
+        data: leadsData,
+        isLoading: isLeadsLoading,
+        isError: isLeadsError,
+        refetch: refetchLeads,
+    } = useQuery({
+        queryKey: ["leads"], // 🧩 include filters in query key for auto refetch
+        // queryFn: () => getLeadsWithFilters(filters), // ✅ pass filters to API
+        queryFn: () => getLeads(), // ✅ pass filters to API
+        // enabled: isLoaded, // ✅ wait for filters to load from localStorage
+        // enabled: true,
+    });
+
+    const allLeads = leadsData?.data || []
+
+    const {
+        data: leadStatuses,
+        isLoading: isLeadStatusesLoading,
+        isError: isLeadStatusesError,
+        refetch: refetchLeadStatuses,
+    } = useQuery({
+        queryKey: ["leadStatuses"],
+        queryFn: getLeadStatuses,
+    });
+
+    const {
+        data: leadSources,
+        isLoading: isLeadSourcesLoading,
+        isError: isLeadSourcesError,
+        refetch: refetchLeadSources,
+    } = useQuery({
+        queryKey: ["leadSources"],
+        queryFn: getLeadSources,
+    });
+
+    console.log("leadSources:", leadSources)
+
+    const filteredData = React.useMemo(() => {
+        if (!Array.isArray(allLeads)) return [];
+
+        let results = allLeads;
+
+        // ✅ Filter by Status
+        if (filters.status?.length) {
+            results = results.filter((lead) => {
+                // handle both `lead.status` being object or string
+                const leadStatus = typeof lead.status === "object" ? lead.status.name : lead.status;
+                return filters?.status?.includes(leadStatus);
+            });
+        }
+
+        // ✅ Filter by Category (Hot / Warm / Cold)
+        if (filters.category?.length) {
+            results = results.filter((lead) => {
+                const leadCategory =
+                    typeof lead.category === "object"
+                        ? lead.category.name
+                        : lead.category || "";
+
+                return filters?.category?.includes(leadCategory);
+            });
+        }
+
+        // ✅ Filter by Source (null-safe)
+        if (filters.source?.length) {
+            results = results.filter((lead) =>
+                filters?.source?.includes(lead.source || "Unknown")
+            );
+        }
+
+        // ✅ Filter by Owner
+        if (filters.owner?.length) {
+            results = results.filter((lead) =>
+                filters?.owner?.includes(lead.assignedToName || "")
+            );
+        }
+
+        // ✅ Filter by Date Range
+        if (filters.dateRange?.from || filters.dateRange?.to) {
+            const from = filters.dateRange.from
+                ? new Date(filters.dateRange.from).setHours(0, 0, 0, 0)
+                : null;
+
+            const to = filters.dateRange.to
+                ? new Date(filters.dateRange.to).setHours(23, 59, 59, 999)
+                : null;
+
+            results = results.filter((lead) => {
+                const created = new Date(lead.createdAt).getTime();
+
+                if (from && created < from) return false;
+                if (to && created > to) return false;
+                return true;
+            });
+        }
+
+
+        return results;
+    }, [allLeads, filters, filtersActive]);
+
+    const leadGlobalFilterFn = (
+        row: any,
+        columnId: string,
+        filterValue: string
+    ) => {
+        if (!filterValue) return true;
+
+        const search = String(filterValue).toLowerCase();
+        const lead = row.original;
+
+        const searchable = [
+            lead.id || "",
+            lead.email || "",
+            lead.phone || lead.mobile || "",
+            lead.name || "",
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return searchable.includes(search);
+    };
+
+    const handleFilterChange = (newFilter: Record<string, any>) => {
+        setFilters((prev) => ({ ...prev, ...newFilter }))
+    }
+
+    const handleFilterSelect = (filterName: string) => {
+        setFiltersActive((prev) =>
+            prev.includes(filterName)
+                ? prev.filter((f) => f !== filterName) // toggle off if already active
+                : [...prev, filterName] // add if not active
+        )
+    }
+
+    const clearAllFilters = () => setFilters({})
+
+    // 2️⃣ Tab click handler
+    const handleTabClick = (tab: typeof activeTab) => {
+        setActiveTab(tab)
+    }
+
     return (
-        <div className="flex flex-1 flex-col gap-4 p-4">
-            {/* {Array.from({ length: 24 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="bg-muted/50 aspect-video h-12 w-full rounded-lg"
+        <div className="flex flex-1 flex-col gap-2">
+
+            {/* 🔥 Sticky top section */}
+            <div className="sticky top-0 z-50 bg-white flex flex-col gap-2 border-b">
+                {/* Tabs */}
+                <div className="flex border-b px-2">
+                    <div
+                        className={`font-semibold p-2 cursor-pointer border-b-2 ${activeTab === "all_leads" ? "border-blue-600" : "border-transparent"
+                            }`}
+                        onClick={() => handleTabClick("all_leads")}
+                    >
+                        All Leads
+                    </div>
+
+                    <div
+                        className={`font-semibold p-2 cursor-pointer border-b-2 text-neutral-500 ${activeTab === "unattended" ? "border-blue-600" : "border-transparent"
+                            }`}
+                    // onClick={() => handleTabClick("unattended")}
+                    >
+                        Unattended
+                    </div>
+
+                    <div
+                        className={`font-semibold p-2 cursor-pointer border-b-2 text-neutral-500 ${activeTab === "pending_approval" ? "border-blue-600" : "border-transparent"
+                            }`}
+                    // onClick={() => handleTabClick("pending_approval")}
+                    >
+                        Pending Approval
+                    </div>
+                </div>
+
+                {/* Options */}
+                <div className="flex items-center gap-2 justify-between px-2">
+                    {/* <Input
+                        placeholder="Search by email..."
+                        value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("email")?.setFilterValue(event.target.value)
+                        }
+                        className="max-w-sm bg-white h-8"
+                    /> */}
+
+                    <Input
+                        placeholder="Search by Email, Mobile, or ID..."
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        className="max-w-sm bg-white h-8"
+                    />
+
+
+                    <div className="flex gap-2 items-center">
+                        {/* <div className="hidden sm:flex gap-[-1px]">
+                            <Button
+                                size="sm"
+                                onClick={() => setStatusModalOpen(true)}
+                                className="rounded-r-none"
+                            >
+                                <IconTarget className="text-white" />
+                                Change Status
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={() => setOwnerModalOpen(true)}
+                                // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
+                                className="rounded-l-none border-l-1 border-l-white"
+                            >
+                                <IconUserStar className="text-white" />
+                                Change Owner
+                            </Button>
+                        </div> */}
+
+                        {/* <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setFilterModalOpen(true)}
+                            className="rounded-full"
+                        >
+                            <IconFilter2 />
+                            Filter
+                        </Button> */}
+
+                        {/* <TableFilterComponent
+                            trigger={<Button
+                                size="sm"
+                                variant="outline"
+                                // onClick={() => setFilterModalOpen(true)}
+                                className="rounded-full"
+                            >
+                                <IconFilter2 />
+                                Filter
+                            </Button>}
+                        /> */}
+
+
+                        <TableFilterComponent
+                            onFilterSelect={handleFilterSelect}
                         />
-                    ))} */}
-            <DataTable />
-            {/* <DataTable columns={columns} data={payments} filterColumn="email" /> */}
+
+                        <CalendarRangeComponent
+                            onApply={(range) => {
+                                handleFilterChange({
+                                    dateRange: {
+                                        from: range?.from ? new Date(range.from) : null,
+                                        to: range?.to ? new Date(range.to) : null
+                                    }
+                                })
+                            }}
+                        />
+
+
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setOpenUploadModal(true)}>
+                                <IconUpload />
+                                Upload
+                            </Button>
+
+                            <BulkUploadComponent open={openUploadModal} onOpenChange={setOpenUploadModal} />
+
+                            <Button size="sm" onClick={() => setOpenAddLeadModal(true)} >
+                                <IconPlus />
+                                Add
+                            </Button>
+
+                            <AddLeadComponent open={openAddLeadModal} onOpenChange={setOpenAddLeadModal} />
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {/* Filters */}
+                <div className="flex gap-2 px-2">
+                    {filtersActive.includes("Status") && (
+                        <FilterDropdownComponent
+                            label="Status"
+                            filterKey="status"
+                            // options={["New", "Contacted", "Converted"]}
+                            options={leadStatuses?.data.map((status: any) => status.name) || []}
+                            selectedValues={filters.status || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Category") && (
+                        <FilterDropdownComponent
+                            label="Category"
+                            filterKey="category"
+                            options={["HOT", "WARM", "COLD"]}
+                            selectedValues={filters.category || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Source") && (
+                        <FilterDropdownComponent
+                            label="Source"
+                            filterKey="source"
+                            // options={["Website", "Referral", "Social Media"]}
+                            options={leadSources?.data}
+                            selectedValues={filters.source || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+
+                    {filtersActive.includes("Owner") && (
+                        <FilterDropdownComponent
+                            label="Owner"
+                            filterKey="owner"
+                            options={["Alice", "Bob", "Charlie"]}
+                            selectedValues={filters.owner || []}
+                            onChange={handleFilterChange}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Tab content */}
+            {/* <div className="flex-1 p-4 overflow-y-auto"> */}
+            <div className="px-2">
+                {activeTab === "all_leads" &&
+                    <DataTable
+                        columns={columns}
+                        data={filteredData}
+                        globalFilterFn={leadGlobalFilterFn}
+                        globalSearch={globalSearch}
+                        onGlobalSearchChange={setGlobalSearch}
+                    />
+                }
+                {activeTab === "unattended" &&
+                    <DataTable
+                        columns={columns}
+                        data={filteredData}
+                        globalFilterFn={leadGlobalFilterFn}
+                        globalSearch={globalSearch}
+                        onGlobalSearchChange={setGlobalSearch}
+                    />
+                }
+                {activeTab === "pending_approval" &&
+                    <DataTable
+                        columns={columns}
+                        data={filteredData}
+                        globalFilterFn={leadGlobalFilterFn}
+                        globalSearch={globalSearch}
+                        onGlobalSearchChange={setGlobalSearch}
+                    />
+                }
+            </div>
+
         </div>
     )
 }

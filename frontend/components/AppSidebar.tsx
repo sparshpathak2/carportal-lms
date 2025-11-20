@@ -37,26 +37,8 @@ const data = {
                     title: "Home",
                     url: "#",
                 },
-                // {
-                //     title: "Project Structure",
-                //     url: "#",
-                // },
             ],
         },
-        // {
-        //     title: "User Management",
-        //     url: "#",
-        //     items: [
-        //         {
-        //             title: "All Users",
-        //             url: "#",
-        //         },
-        //         {
-        //             title: "Dealers",
-        //             url: "#",
-        //         },
-        //     ],
-        // },
         {
             title: "Leads Management",
             url: "#",
@@ -70,31 +52,23 @@ const data = {
                     title: "All Leads",
                     url: "/leads",
                     parentMatch: true
-                },
-                {
-                    title: "Lead Activity Logs",
-                    url: "#",
-                },
+                }
             ],
         },
         {
-            title: "Billing & Wallet",
+            title: "User Management",
             url: "#",
             items: [
                 {
-                    title: "Packages Management",
-                    url: "#",
+                    title: "All Users",
+                    url: "/users",
                 },
                 {
-                    title: "Transactions & Invoices",
-                    url: "#",
+                    title: "Dealers",
+                    url: "/dealers",
                 },
                 {
-                    title: "Lead Pricing Config",
-                    url: "#",
-                },
-                {
-                    title: "Payment Gateways",
+                    title: "Packs",
                     url: "#",
                 },
             ],

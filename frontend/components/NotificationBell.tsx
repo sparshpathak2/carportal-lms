@@ -15,7 +15,7 @@ import { getNotificationsByUser, getUnReadCount, getUnViewedCount } from "@/feat
 import { SessionContext } from "./SessionProvider"
 import { Notification } from "@/lib/types"
 import { Avatar, AvatarFallback } from "./ui/avatar"
-import { avatarBgColors } from "@/app/constants/colors"
+import { avatarBgColors } from "@/app/constants/constants"
 import { formatNotificationDate, stringToColorIndex } from "@/lib/utils"
 import { Button } from "./ui/button"
 

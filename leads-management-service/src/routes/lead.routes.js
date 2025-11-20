@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { createLead, getLeads, getLeadById, updateLead, bulkUploadLeads } from "../controllers/lead.controller.js";
+import { createLead, getLeads, getLeadById, updateLead, bulkUploadLeads, getLeadSources } from "../controllers/lead.controller.js";
 
 const router = Router();
 
 // Leads Routes
 router.post("/", createLead);
 router.get("/", getLeads);
+router.get("/sources", getLeadSources);
 router.get("/:id", getLeadById);
 router.put("/:id", updateLead);
 

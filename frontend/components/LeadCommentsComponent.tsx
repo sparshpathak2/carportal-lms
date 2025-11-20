@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from "react"
+import React, { useContext, useEffect, useState } from "react"
 import { Badge } from "./ui/badge"
-import { activityTypeColors, avatarBgColors } from "@/app/constants/colors"
+import { activityTypeColors, avatarBgColors } from "@/app/constants/constants"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { ActivityType, Comment, Lead } from "@/lib/types"
 import { Button } from "./ui/button"
@@ -11,21 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { DateTimePicker } from "./DateTimePickerComponent2"
 import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query"
 import { createComment, getCommentsByLeadId } from "@/features/leads/api/lead"
-import { IconAlertCircle } from "@tabler/icons-react"
+import { IconAlertCircle, IconUser } from "@tabler/icons-react"
 import toast from "react-hot-toast"
+import { SessionContext } from "./SessionProvider"
 
 type Props = {
     lead: Lead
 }
-
-// Mock comments data
-// const mockComments = [
-//     { id: "1", leadId: "lead_001", type: "REMARK", description: "Called the lead, no answer.", createdBy: "user_001", createdAt: new Date("2025-09-27T10:00:00Z") },
-//     { id: "2", leadId: "lead_001", type: "EMAIL", description: "Sent follow-up email.", createdBy: "user_002", createdAt: new Date("2025-09-28T14:30:00Z") },
-//     { id: "3", leadId: "lead_001", type: "NOTE", description: "Lead requested a demo next week.", createdBy: "user_003", createdAt: new Date("2025-09-29T09:15:00Z") },
-//     { id: "4", leadId: "lead_001", type: "NOTE", description: "Follow-up scheduled.", createdBy: "user_003", createdAt: new Date("2025-09-29T09:15:00Z") },
-//     { id: "5", leadId: "lead_001", type: "NOTE", description: "Demo completed.", createdBy: "user_003", createdAt: new Date("2025-09-29T09:15:00Z") },
-// ]
 
 const activityTypes: ActivityType[] = [
     "LEAD_ADDED",
@@ -56,6 +48,7 @@ function stringToColorIndex(str: string) {
 
 export default function LeadCommentsComponent({ lead }: Props) {
     // const [comments, setComments] = useState(mockComments)
+    const { user, loading, refreshSession } = useContext(SessionContext)
     const [showTextarea, setShowTextarea] = useState(false)
     const [newComment, setNewComment] = useState("")
     const [activityType, setActivityType] = useState<ActivityType | "">("")
@@ -149,7 +142,7 @@ export default function LeadCommentsComponent({ lead }: Props) {
             {showTextarea && (
                 <div className="flex flex-col gap-3 border-1 p-4 bg-neutral-50 rounded-md mb-4">
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex gap-2">
                         <div className="flex flex-col gap-1">
                             <div className="text-sm">Select type</div>
                             <Select
@@ -202,12 +195,14 @@ export default function LeadCommentsComponent({ lead }: Props) {
 
                             <div className="flex gap-2 items-center">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback className={`${bgColor} text-white`}>
-                                        {firstLetter}
+                                    {/* <AvatarFallback className={`${bgColor} text-white`}> */}
+                                    <AvatarFallback className="bg-neutral-200">
+                                        {/* {firstLetter} */}
+                                        <IconUser size={18} />
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col text-sm">
-                                    <div>{lead?.name}</div>
+                                    <div>{user?.name}</div>
 
                                     {(() => {
                                         const commentDate = new Date(comment.createdAt);
