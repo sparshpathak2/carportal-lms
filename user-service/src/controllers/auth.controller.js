@@ -3,6 +3,8 @@ import prisma from "../lib/prisma.js";
 import { v4 as uuidv4 } from "uuid";
 import { nanoid } from "nanoid";
 
+// import { prisma } from "../lib/prisma.js"
+
 // Login controller
 export const login = async (req, res) => {
     try {

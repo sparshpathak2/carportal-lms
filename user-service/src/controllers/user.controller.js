@@ -1,5 +1,7 @@
 import prisma from "../lib/prisma.js";
-import bcrypt from "bcryptjs";
+// import bcrypt from "bcryptjs";
+
+// import { prisma } from "../lib/prisma.js"
 
 // ✅ Get all users (with roles and dealer)
 export const getAllUsers = async (req, res) => {

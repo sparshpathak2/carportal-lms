@@ -5,14 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon ./src/index.js",
-    "start": "node ./src/index.js"
+    "start": "node ./src/index.js",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^6.15.0",
+    "@prisma/client": "4.15.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
@@ -20,10 +24,10 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "nanoid": "^5.1.5",
-    "prisma": "^6.15.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "prisma": "4.15.0",
     "nodemon": "^3.1.10"
   }
 }
