@@ -7,7 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import dealerRoutes from "./routes/dealer.routes.js";
 import packRoutes from "./routes/pack.routes.js";
-import { attachUser } from "./middlewares/attachuser.middleware.js";
+import { attachUser } from "./middlewares/attachUser.middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3002;

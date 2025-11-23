@@ -9,7 +9,7 @@ import leadActivityRoutes from "./routes/leadActivity.routes.js";
 import leadStatusRoutes from "./routes/leadStatus.routes.js";
 import leadCommentRoutes from "./routes/leadComment.routes.js";
 import integrationRoutes from "./routes/integrations.routes.js";
-import { attachUser } from "./middlewares/attachuser.middleware.js";
+import { attachUser } from "./middlewares/attachUser.middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3003;
