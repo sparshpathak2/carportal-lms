@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { leadStatusColors } from "@/app/constants/constants";
 import { Dealer } from "@/lib/types";
 
-export const dealerColumns: ColumnDef<Dealer>[] = [
+export const dealersColumns: ColumnDef<Dealer>[] = [
   // {
   //     id: "select",
   //     header: ({ table }) => (
