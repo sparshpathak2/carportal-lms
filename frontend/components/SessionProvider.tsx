@@ -27,6 +27,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         try {
             const res = await axiosInstance.post("/user/auth/verify-session", { withCredentials: true })
             setUser(res.data.user)
+
+            // ✅ IF SESSION VALID & CURRENT PATH IS "/" → redirect to /leads
+            if (pathname === "/") {
+                router.replace("/leads")
+            }
         } catch (err) {
             setUser(null)
             if (pathname !== "/login") {
