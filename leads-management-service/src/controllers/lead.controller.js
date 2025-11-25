@@ -39,7 +39,7 @@ const formatLead = (lead) => ({
     updatedAt: lead.updatedAt,
 });
 
-const DEFAULT_STATUS_ID = "Xa9fK3D2Lp"
+const DEFAULT_STATUS_ID = "1Dhe1VRak9"
 
 // ✅ Create lead
 export const createLead = async (req, res) => {

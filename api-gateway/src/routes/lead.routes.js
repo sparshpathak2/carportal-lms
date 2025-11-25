@@ -43,6 +43,15 @@ router.use(
     })
 );
 
+// ✅ Lead lead lost reasons routes
+router.use(
+    "/leadLostReasons",
+    proxy(LEADS_SERVICE, {
+        proxyReqPathResolver: (req) => `/leadLostReasons${req.url}`,
+        proxyReqOptDecorator: attachUserHeaders,
+    })
+);
+
 // ✅ Lead filters routes
 router.use(
     "/filters",

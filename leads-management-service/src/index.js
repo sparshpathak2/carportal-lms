@@ -7,6 +7,7 @@ import leadRoutes from "./routes/lead.routes.js";
 import filterRoutes from "./routes/filter.routes.js";
 import leadActivityRoutes from "./routes/leadActivity.routes.js";
 import leadStatusRoutes from "./routes/leadStatus.routes.js";
+import leadLostReason from "./routes/leadLostReason.routes.js";
 import leadCommentRoutes from "./routes/leadComment.routes.js";
 import integrationRoutes from "./routes/integrations.routes.js";
 import { attachUser } from "./middlewares/attachUser.middleware.js";
@@ -52,6 +53,7 @@ app.use("/leads", leadRoutes);
 app.use("/filters", filterRoutes);
 app.use("/activities", leadActivityRoutes);
 app.use("/statuses", leadStatusRoutes);
+app.use("/leadLostReasons", leadLostReason);
 app.use("/comments", leadCommentRoutes);
 app.use("/integrations", integrationRoutes);
 
