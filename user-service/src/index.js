@@ -5,6 +5,7 @@ import "dotenv/config";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import roleRoutes from "./routes/role.routes.js";
 import dealerRoutes from "./routes/dealer.routes.js";
 import packRoutes from "./routes/pack.routes.js";
 import { attachUser } from "./middlewares/attachUser.middleware.js";
@@ -30,6 +31,7 @@ app.use(attachUser); // ✅ before routes
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/roles", roleRoutes);
 app.use("/dealers", dealerRoutes);
 app.use("/packs", packRoutes);
 

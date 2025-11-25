@@ -9,6 +9,7 @@ const canAccessAll = (role) =>
 export const createLeadStatus = async (req, res) => {
     try {
         const roleName = req.user.role?.name;
+        console.log("roleName:", roleName)
         if (!canAccessAll(roleName)) {
             return res.status(403).json({ success: false, message: "Forbidden" });
         }

@@ -32,6 +32,9 @@ router.use("/auth", buildProxy("/auth"));
 router.use("/users", buildProxy("/users"));
 
 
+router.use("/roles", buildProxy("/roles"));
+
+
 // 🏢 Dealers
 router.use("/dealers", buildProxy("/dealers"));
 

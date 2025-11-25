@@ -64,7 +64,13 @@ enum DealerType {
 model Role {
   id    String @id
   name  String @unique // e.g. SUPER_ADMIN, ADMIN, SALES, SUPPORT, etc.
+  roleType RoleType @default(DEALER)
   users User[]
+}
+
+enum RoleType {
+  INTERNAL      // roles created by system (e.g., SUPER_ADMIN)
+  DEALER      // dealer-specific roles (e.g., SALES, SUPPORT)
 }
 
 model DealerOwner {
