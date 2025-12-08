@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                     <div className="flex gap-4 items-center">
                         {/* <IconBell className="w-6 h-6" strokeWidth={1.5} /> */}
-                        <NotificationBell />
+                        {/* <NotificationBell /> */}
                         <NavUser />
                     </div>
                 </header>

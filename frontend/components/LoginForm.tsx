@@ -132,12 +132,12 @@ export function LoginForm({
                                 <div className="grid gap-3">
                                     <div className="flex items-center">
                                         <Label htmlFor="password">Password</Label>
-                                        <a
+                                        {/* <a
                                             href="#"
                                             className="ml-auto text-sm underline-offset-4 hover:underline"
                                         >
                                             Forgot your password?
-                                        </a>
+                                        </a> */}
                                     </div>
                                     <Input
                                         id="password"
@@ -156,8 +156,7 @@ export function LoginForm({
                                     {loading ? "Processing..." : isSignup ? "Signup" : "Login"}
                                 </Button>
                             </div>
-                            <div className="text-center text-sm">
-                                {/* Don&apos;t have an account?{" "} */}
+                            {/* <div className="text-center text-sm">
                                 {isSignup ? "Already have an account?" : "Don’t have an account?"}{" "}
                                 <a
                                     type="button"
@@ -166,15 +165,15 @@ export function LoginForm({
                                 >
                                     {isSignup ? "Login" : "Signup"}
                                 </a>
-                            </div>
+                            </div> */}
                         </div>
                     </form>
                 </CardContent>
             </Card>
-            <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+            {/* <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
                 By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
                 and <a href="#">Privacy Policy</a>.
-            </div>
+            </div> */}
         </div>
     )
 }

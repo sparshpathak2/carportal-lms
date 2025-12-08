@@ -3,6 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/lib/types";
 import { renderCategoryIcon } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
+import { useContext } from "react";
+import { SessionContext } from "@/components/SessionProvider";
 
 export const leadsColumns: ColumnDef<Lead>[] = [
     // {
@@ -93,15 +96,17 @@ export const leadsColumns: ColumnDef<Lead>[] = [
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => {
-            const leadId = row.original.id // ✅ make sure id exists in Lead type
-            const leadName = row.getValue("name") as string
+            // const leadId = row.original.id // ✅ make sure id exists in Lead type
+            // const leadName = row.getValue("name") as string
+            const lead = row.original;
 
             return (
                 <a
-                    href={`/leads/${leadId}`}
+                    href={`/leads/${lead.id}`}
                     className="text-blue-600 hover:underline"
                 >
-                    {leadName}
+                    {/* {leadName} */}
+                    {lead.customer?.name || "-"}
                 </a>
             )
         },
@@ -109,58 +114,135 @@ export const leadsColumns: ColumnDef<Lead>[] = [
     {
         accessorKey: "email",
         header: "Email",
-        cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+        // cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+        cell: ({ row }) => {
+            const lead = row.original;
+            return <div className="lowercase">{lead.customer?.email || "-"}</div>;
+        },
     },
     {
         accessorKey: "phone",
         header: "Phone",
-        cell: ({ row }) => <div className="lowercase">{row.getValue("phone")}</div>
+        cell: ({ row }) => {
+            const lead = row.original;
+            return lead.customer?.phone || "-";
+        },
     },
+    // {
+    //     accessorKey: "assignedToName",
+    //     header: "Owner",
+    //     cell: ({ row }) => {
+    //         const assignedToName = row.getValue("assignedToName") as string;
+
+    //         return (
+    //             <span className="text-gray-700 font-medium">
+    //                 {assignedToName || "-"}
+    //             </span>
+    //         );
+    //     },
+    // },
+    // {
+    //     id: "assignedTo",
+    //     header: "Owner",
+    //     cell: ({ row }) => {
+    //         const activeAssignment = row.original.leadAssignments.find(a => a.isActive);
+
+    //         return (
+    //             <span className="text-gray-700 font-medium">
+    //                 {activeAssignment?.assignedToName || "-"}
+    //             </span>
+    //         );
+    //     },
+    // },
     {
-        accessorKey: "assignedToName",
+        accessorKey: "resolvedAssignedToName", // fake accessor
         header: "Owner",
         cell: ({ row }) => {
-            const assignedToName = row.getValue("assignedToName") as string;
+            const { user } = useContext(SessionContext)
+            const lead = row.original
+
+            const { resolvedAssignedToName } = resolveLeadComputedFields(lead, user)
 
             return (
                 <span className="text-gray-700 font-medium">
-                    {assignedToName || "-"}
+                    {resolvedAssignedToName || "-"}
                 </span>
-            );
+            )
         },
     },
+
+    // {
+    //     accessorKey: "status",
+    //     header: "Status",
+    //     cell: ({ row }) => {
+    //         const status = row.getValue("status") as { name: string } | null;
+    //         const statusName = status?.name ?? "NA";
+    //         const colorClass = leadStatusColors[statusName] || "bg-gray-100 text-gray-700";
+
+    //         return (
+    //             <Badge className={`capitalize ${colorClass}`}>
+    //                 {statusName}
+    //             </Badge>
+    //         );
+    //     },
+    // },
     {
-        accessorKey: "status",
+        accessorKey: "resolvedStatus",
         header: "Status",
         cell: ({ row }) => {
-            const status = row.getValue("status") as { name: string } | null;
-            const statusName = status?.name ?? "NA";
-            const colorClass = leadStatusColors[statusName] || "bg-gray-100 text-gray-700";
+            const { user } = useContext(SessionContext)
+            const lead = row.original
+
+            const { resolvedStatus } = resolveLeadComputedFields(lead, user)
+
+            const colorClass =
+                leadStatusColors[resolvedStatus] || "bg-gray-100 text-gray-700"
 
             return (
                 <Badge className={`capitalize ${colorClass}`}>
-                    {statusName}
+                    {resolvedStatus}
                 </Badge>
-            );
+            )
         },
     },
+    // {
+    //     accessorKey: "category",
+    //     header: "Category",
+    //     cell: ({ row }) => {
+    //         const lead = row.original; // full row data
+    //         const category = row.getValue("category") as string;
+    //         const colorClass =
+    //             leadCategoryColors[category] || "bg-gray-100 text-gray-700";
+
+    //         return (
+    //             <Badge className={`capitalize flex items-center gap-1 ${colorClass}`}>
+    //                 {renderCategoryIcon(lead)}
+    //                 {category || "-"}
+    //             </Badge>
+    //         );
+    //     },
+    // },
     {
-        accessorKey: "category",
+        accessorKey: "resolvedCategory",
         header: "Category",
         cell: ({ row }) => {
-            const lead = row.original; // full row data
-            const category = row.getValue("category") as string;
+            const { user } = useContext(SessionContext)
+            const lead = row.original
+
+            const { resolvedCategory } = resolveLeadComputedFields(lead, user)
+
             const colorClass =
-                leadCategoryColors[category] || "bg-gray-100 text-gray-700";
+                leadCategoryColors[resolvedCategory] || "bg-gray-100 text-gray-700"
 
             return (
                 <Badge className={`capitalize flex items-center gap-1 ${colorClass}`}>
-                    {renderCategoryIcon(lead)}
-                    {category || "-"}
+                    {renderCategoryIcon(resolvedCategory)}
+                    {resolvedCategory}
                 </Badge>
-            );
+            )
         },
     },
+
     {
         accessorKey: "source",
         header: "Source",

@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import prisma from "../lib/prisma.js";
+import { getAllDealersService } from "../services/dealer.service.js";
 
 // ✅ Get all dealers (with their users)
 // export const getAllDealers = async (req, res) => {
@@ -21,43 +22,67 @@ import prisma from "../lib/prisma.js";
 // };
 
 // ✅ Get all dealers (with their users, owners, packs)
+// export const getAllDealers = async (req, res) => {
+//     try {
+//         const dealers = await prisma.dealer.findMany({
+//             include: {
+//                 users: {
+//                     include: { role: true },
+//                 },
+//                 owners: {
+//                     include: { user: true }, // many-to-many owners
+//                 },
+//                 packs: true,
+//             },
+//         });
+
+//         return res.status(200).json({ success: true, data: dealers });
+//     } catch (err) {
+//         console.error(err);
+//         return res.status(500).json({ success: false, message: "Internal server error" });
+//     }
+// };
+
+
 export const getAllDealers = async (req, res) => {
     try {
-        const dealers = await prisma.dealer.findMany({
-            include: {
-                users: {
-                    include: { role: true },
-                },
-                owners: {
-                    include: { user: true }, // many-to-many owners
-                },
-                packs: true,
-            },
-        });
+        console.log("req.user:", req.user)
+        const dealers = await getAllDealersService({ user: req.user });
 
         return res.status(200).json({ success: true, data: dealers });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
     }
 };
 
 
-// ✅ Get single dealer by ID
+// ✅ Get dealer by ID (with users, owners, packs)
 // export const getDealerById = async (req, res) => {
 //     const { id } = req.params;
+
 //     try {
 //         const dealer = await prisma.dealer.findUnique({
 //             where: { id },
 //             include: {
 //                 users: {
-//                     include: {
-//                         role: true,
-//                     },
+//                     include: { role: true },
 //                 },
+//                 owners: {
+//                     include: { user: true },
+//                 },
+//                 packs: true,
 //             },
 //         });
-//         if (!dealer) return res.status(404).json({ success: false, message: "Dealer not found" });
+
+//         if (!dealer) {
+//             return res.status(404).json({ success: false, message: "Dealer not found" });
+//         }
+
 //         return res.status(200).json({ success: true, data: dealer });
 //     } catch (err) {
 //         console.error(err);
@@ -65,7 +90,6 @@ export const getAllDealers = async (req, res) => {
 //     }
 // };
 
-// ✅ Get dealer by ID (with users, owners, packs)
 export const getDealerById = async (req, res) => {
     const { id } = req.params;
 
@@ -73,26 +97,58 @@ export const getDealerById = async (req, res) => {
         const dealer = await prisma.dealer.findUnique({
             where: { id },
             include: {
+                // All users of this dealer
                 users: {
-                    include: { role: true },
+                    include: {
+                        role: true,
+                        dealer: true,
+                        ownerOf: {
+                            include: { dealer: true } // if user also owns other dealers
+                        }
+                    }
                 },
+
+                // Owners of this dealer
                 owners: {
-                    include: { user: true },
+                    include: {
+                        user: {
+                            include: {
+                                role: true,
+                                dealer: true,
+                                ownerOf: {
+                                    include: { dealer: true }
+                                }
+                            }
+                        }
+                    }
                 },
+
+                // Packs assigned to dealer
                 packs: true,
             },
         });
 
         if (!dealer) {
-            return res.status(404).json({ success: false, message: "Dealer not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Dealer not found"
+            });
         }
 
-        return res.status(200).json({ success: true, data: dealer });
+        return res.status(200).json({
+            success: true,
+            data: dealer
+        });
+
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        console.error("getDealerById error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
+
 
 
 // ✅ Create new dealer

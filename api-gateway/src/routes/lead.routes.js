@@ -25,6 +25,15 @@ router.use(
     })
 );
 
+// ✅ Customers routes
+router.use(
+    "/customers",
+    proxy(LEADS_SERVICE, {
+        proxyReqPathResolver: (req) => `/customers${req.url}`,
+        proxyReqOptDecorator: attachUserHeaders,
+    })
+);
+
 // ✅ Lead activities routes
 router.use(
     "/activities",
@@ -48,6 +57,15 @@ router.use(
     "/leadLostReasons",
     proxy(LEADS_SERVICE, {
         proxyReqPathResolver: (req) => `/leadLostReasons${req.url}`,
+        proxyReqOptDecorator: attachUserHeaders,
+    })
+);
+
+// ✅ Lead sources routes
+router.use(
+    "/sources",
+    proxy(LEADS_SERVICE, {
+        proxyReqPathResolver: (req) => `/sources${req.url}`,
         proxyReqOptDecorator: attachUserHeaders,
     })
 );

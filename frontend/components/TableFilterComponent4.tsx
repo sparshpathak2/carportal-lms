@@ -35,8 +35,8 @@ export function TableFilterComponent({
         { name: "Status", icon: <IconTarget size={18} /> },
         { name: "Category", icon: <IconFilter size={18} /> },
         { name: "Source", icon: <IconSwipeRight size={18} /> },
-        { name: "Owner", icon: <IconUserStar size={18} /> },
-        { name: "Date range", icon: <IconCalendarStats size={18} /> },
+        // { name: "Owner", icon: <IconUserStar size={18} /> },
+        // { name: "Date range", icon: <IconCalendarStats size={18} /> },
     ]
 
     const [selectedFilters, setSelectedFilters] = useState<string[]>(activeFilters)

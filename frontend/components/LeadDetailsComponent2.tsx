@@ -4,11 +4,13 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Lead, LeadLostReason, LeadStatus } from "@/lib/types"
 import { Loader2, SquarePen } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useContext, useMemo, useState } from "react"
 import { Button } from "./ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import toast from "react-hot-toast"
 import { Badge } from "./ui/badge"
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
+import { SessionContext } from "./SessionProvider"
 
 type LeadDetailsFormProps = {
     lead: Lead
@@ -21,18 +23,28 @@ type LeadDetailsFormProps = {
 
 export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLeadMutation, isSaving }: LeadDetailsFormProps) {
     const [isEditable, setIsEditable] = useState(false)
+    const { user } = useContext(SessionContext)
+
+    console.log("user in leadsDeatisl:", user)
+
+    // RESOLVE computed values
+    const { resolvedStatus, resolvedCategory, resolvedAssignedToName, resolvedLeadLostReason } =
+        resolveLeadComputedFields(lead, user) // If you have user, pass here
+
+
 
     // original values for dirty check
     const original = useMemo(() => ({
-        name: lead?.name || "",
-        email: lead?.email || "",
-        phone: lead?.phone || "",
-        status: lead?.status?.name || "",
+        name: lead?.customer?.name || "",
+        email: lead?.customer?.email || "",
+        phone: lead?.customer?.phone || "",
+        // status: lead?.status?.name || "",
+        status: resolvedStatus || "",
         lostReason: lead?.lostReason?.name || "",
-        alternatePhone: lead?.alternatePhone || "",
+        alternatePhone: lead?.customer?.alternatePhone || "",
         oldModel: lead?.oldModel || "",
-        location: lead?.location || "",
-        city: lead?.city || "",
+        // location: lead?.customer?.location || "",
+        city: lead?.customer?.city || "",
         testDrive: lead?.testDrive ? "Yes" : "No",
         finance: lead?.finance ? "Yes" : "No",
         occupation: lead?.occupation || "",
@@ -69,13 +81,12 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
 
             <div className="flex w-full border-b px-2.5 justify-between items-center">
                 <div className="font-semibold p-2 border-b-2 border-white">Lead Details</div>
-                {!isEditable &&
+                {!isEditable && (user?.role?.name === "SUPER_ADMIN" || user?.role?.name === "ADMIN") && (
                     <SquarePen
                         className="w-5 h-5 cursor-pointer"
                         onClick={() => setIsEditable((prev) => !prev)}
                     />
-                }
-
+                )}
 
             </div>
 
@@ -91,17 +102,17 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4">
                         <div className="grid gap-2">
                             <Label htmlFor="name" className="text-gray-500">Name</Label>
-                            <div className="py-[6px]">{lead?.name}</div>
+                            <div className="py-[6px]">{lead?.customer?.name}</div>
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="email" className="text-gray-500">Email</Label>
-                            <div className="py-[6px]">{lead?.email}</div>
+                            <div className="py-[6px]">{lead?.customer?.email}</div>
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="phone" className="text-gray-500">Phone</Label>
-                            <div className="py-[6px]">{lead?.phone}</div>
+                            <div className="py-[6px]">{lead?.customer?.phone}</div>
                         </div>
 
 
@@ -138,10 +149,9 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                                     </Select>
                                     : */}
                                     <div className="flex gap-2 items-center">
-                                        <div className="py-[6px] font-bold">{lead?.status?.name}</div>
-                                        {/* <Badge className="my-[6px]">{lead?.status?.name}</Badge> */}
-                                        {lead?.status?.name === "Lost" && (
-                                            <div>({lead?.lostReason?.name})</div>
+                                        <div className="py-[6px] font-bold">{resolvedStatus}</div>
+                                        {resolvedStatus === "Lost" && (
+                                            <div>({resolvedLeadLostReason})</div>
                                         )}
                                     </div>
                                     {/* } */}
@@ -204,12 +214,12 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                                 id="alternatePhone"
                                 name="alternatePhone"
                                 type="tel"
-                                defaultValue={lead?.alternatePhone || ""}
+                                defaultValue={lead?.customer?.alternatePhone || ""}
                                 onChange={(e) => handleChange("alternatePhone", e.target.value)}
                                 disabled={!isEditable}
                             />
                             :
-                            <div className="py-[6px]">{lead?.alternatePhone || "-"}</div>
+                            <div className="py-[6px]">{lead?.customer?.alternatePhone || "-"}</div>
                         }
                     </div>
 
@@ -228,7 +238,7 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                         }
                     </div>
 
-                    <div className="grid gap-2">
+                    {/* <div className="grid gap-2">
                         <Label htmlFor="location" className="text-gray-500">Location</Label>
                         {isEditable ?
                             <Input
@@ -241,7 +251,7 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                             :
                             <div className="py-[6px]">{lead?.location || "-"}</div>
                         }
-                    </div>
+                    </div> */}
 
                     <div className="grid gap-2">
                         <Label htmlFor="city" className="text-gray-500">City</Label>
@@ -249,12 +259,12 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                             <Input
                                 id="city"
                                 name="city"
-                                defaultValue={lead?.city || ""}
+                                defaultValue={lead?.customer?.city || ""}
                                 onChange={(e) => handleChange("city", e.target.value)}
                                 disabled={!isEditable}
                             />
                             :
-                            <div className="py-[6px]">{lead?.city || "-"}</div>
+                            <div className="py-[6px]">{lead?.customer?.city || "-"}</div>
                         }
                     </div>
 
@@ -342,39 +352,41 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
 
             </form >
 
-            <div className="flex justify-end gap-2 px-4.5 py-3 border-t sticky bottom-0 bg-white">
+            {(user?.role?.name === "SUPER_ADMIN" || user?.role?.name === "ADMIN") && (
+                <div className="flex justify-end gap-2 px-4.5 py-3 border-t sticky bottom-0 bg-white">
 
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    // onClick={() => setIsEditable(false)}
-                    onClick={() => {
-                        setFormData(original)
-                        setIsEditable(false)
-                    }}
-                    disabled={!isEditable}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    type="submit"
-                    form="leadDetailsForm"
-                    size="sm"
-                    disabled={!isEditable || !isDirty || isSaving}
-                >
-                    {isSaving ? (
-                        <>
-                            <div className="flex items-center gap-1.5">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Saving
-                            </div>
-                        </>
-                    ) : (
-                        "Save"
-                    )}
-                </Button>
-            </div>
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        // onClick={() => setIsEditable(false)}
+                        onClick={() => {
+                            setFormData(original)
+                            setIsEditable(false)
+                        }}
+                        disabled={!isEditable}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="leadDetailsForm"
+                        size="sm"
+                        disabled={!isEditable || !isDirty || isSaving}
+                    >
+                        {isSaving ? (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Saving
+                                </div>
+                            </>
+                        ) : (
+                            "Save"
+                        )}
+                    </Button>
+                </div>
+            )}
 
         </div >
     )

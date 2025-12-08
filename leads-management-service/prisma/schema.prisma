@@ -42,25 +42,87 @@ datasource db {
 //   lostReasonId String?
 //   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
 
-//   Activity Activity[]
+//   leadActivity LeadActivity[]
 //   comments Comment[]
 // }
 
+// model Lead {
+//   id             String  @id
+//   dealerId       String? // reference dealerId from user-service
+//   assignedToId   String? // reference userId from user-service
+//   assignedToName String? // reference username from user-service
+
+//   name            String
+//   email           String?
+//   phone           String?
+//   alternatePhone  String?
+//   oldModel        String?
+//   location        String?
+//   city            String?
+//   leadForwardedTo String[] // array of text
+
+//   testDrive  Boolean @default(false)
+//   finance    Boolean @default(false)
+//   occupation String?
+//   budget     Int?
+
+//   category LeadCategory @default(COLD)
+//   source   String?
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   statusId String?
+//   status   LeadStatus? @relation(fields: [statusId], references: [id])
+
+//   lostReasonId String?
+//   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
+
+//   leadActivity LeadActivity[]
+//   comments Comment[]
+
+//   // ------------------------------------------------------------
+//   // 🎯 NEW FIELDS FOR FACEBOOK MARKETING HIERARCHY
+//   // ------------------------------------------------------------
+//   adId       String? // Facebook ad_id
+//   adsetId    String? // Facebook adset_id
+//   campaignId String? // Facebook campaign_id
+
+//   adName       String? // Facebook ad name
+//   adsetName    String? // Facebook ad set name
+//   campaignName String? // Facebook campaign name
+// }
+
+model Customer {
+  id             String   @id
+  name           String
+  email          String?
+  phone          String
+  alternatePhone String?
+  city           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  leads Lead[] // One customer → many leads
+}
+
 model Lead {
-  id             String  @id
-  dealerId       String? // reference dealerId from user-service
-  assignedToId   String? // reference userId from user-service
-  assignedToName String? // reference username from user-service
+  id         String   @id
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  // dealerId       String?
+  // assignedToId   String?
+  // assignedToName String?
 
-  name            String
-  email           String?
-  phone           String?
-  alternatePhone  String?
-  oldModel        String?
-  location        String?
-  city            String?
-  leadForwardedTo String[] // array of text
+  // name            String
+  // email           String?
+  // phone           String?
+  // alternatePhone  String?
+  // location        String?
+  // city            String?
+  // leadForwardedTo String[]
 
+  oldModel   String?
   testDrive  Boolean @default(false)
   finance    Boolean @default(false)
   occupation String?
@@ -78,8 +140,11 @@ model Lead {
   lostReasonId String?
   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
 
-  Activity Activity[]
-  comments Comment[]
+  leadActivity LeadActivity[] @relation("LeadActivities")
+  comments     Comment[]
+
+  leadAssignments LeadAssignment[] // NEW — multiple dealer forwards
+  analytics       LeadAnalytics? // NEW — 1:1 analytics tracking
 
   // ------------------------------------------------------------
   // 🎯 NEW FIELDS FOR FACEBOOK MARKETING HIERARCHY
@@ -93,12 +158,72 @@ model Lead {
   campaignName String? // Facebook campaign name
 }
 
+model LeadAnalytics {
+  id     String @id @default(uuid())
+  leadId String @unique
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  internalUserId String?
+  dealerId       String?
+
+  firstDeliveredAt DateTime?
+  firstConvertedAt DateTime?
+
+  deliveredMetricFlag Boolean @default(false)
+  convertedMetricFlag Boolean @default(false)
+
+  currentStatusOrder  Int?
+  lastStatusChangedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model LeadStatus {
-  id          String           @id
-  name        String           @unique
-  order       Int              @default(0)
-  leads       Lead[]
-  lostReasons LeadLostReason[]
+  id             String           @id
+  name           String           @unique
+  order          Int              @default(0)
+  leads          Lead[]
+  lostReasons    LeadLostReason[]
+  LeadAssignment LeadAssignment[]
+}
+
+model LeadAssignment {
+  id String @id @default(uuid())
+
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  dealerId       String // from user-service dealer table
+  assignedToId   String? // from user-service dealer table
+  assignedToName String? // from user-service dealer table
+  assignedById   String? // internal user ID who forwarded
+  assignedByName String? // internal user ID who forwarded
+  assignedAt     DateTime @default(now())
+
+  isActive Boolean @default(true)
+
+  // per-assignment metric flags
+  deliveredMetricFlag Boolean @default(false)
+  convertedMetricFlag Boolean @default(false)
+
+  // dealer-specific activities
+  leadActivities LeadActivity[] @relation("AssignmentActivities")
+
+  // dealer-specific comments
+  comments Comment[]
+
+  // dealer-specific editable fields
+  statusId String?
+  status   LeadStatus? @relation(fields: [statusId], references: [id])
+
+  lostReasonId String?
+  lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
+
+  category LeadCategory?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Dynamic lost reasons linked to lead
@@ -109,7 +234,8 @@ model LeadLostReason {
   status   LeadStatus @relation(fields: [statusId], references: [id])
   order    Int? // optional, explicitly define order
 
-  leads Lead[]
+  leads           Lead[]
+  leadAssignments LeadAssignment[]
 }
 
 model UserFilter {
@@ -124,34 +250,42 @@ model UserFilter {
 }
 
 model Comment {
-  id            String       @id @default(uuid())
-  leadId        String
-  lead          Lead         @relation(fields: [leadId], references: [id])
-  type          ActivityType
-  description   String
-  createdById   String?
-  createdByName String?
-  createdAt     DateTime     @default(now())
-}
-
-model Activity {
   id     String @id @default(uuid())
   leadId String
   lead   Lead   @relation(fields: [leadId], references: [id])
 
+  leadAssignmentId String? // 👈 NEW
+  leadAssignment   LeadAssignment? @relation(fields: [leadAssignmentId], references: [id])
+
+  type          LeadActivityType
+  description   String
+  createdById   String?
+  createdByName String?
+  createdAt     DateTime         @default(now())
+}
+
+model LeadActivity {
+  id String @id @default(uuid())
+
+  leadId String
+  lead   Lead   @relation("LeadActivities", fields: [leadId], references: [id], onDelete: Cascade)
+
+  leadAssignmentId String?
+  leadAssignment   LeadAssignment? @relation("AssignmentActivities", fields: [leadAssignmentId], references: [id])
+
   performedById   String?
   performedByName String?
-  type            ActivityType
+  type            LeadActivityType
   description     String?
 
-  oldStatus   String? // snapshot name
-  newStatus   String? // snapshot name
-  oldCategory String? // snapshot name
-  newCategory String? // snapshot name
-  oldReason   String? // snapshot name
-  newReason   String? // snapshot name
-  oldAssignee String? // snapshot name
-  newAssignee String? // snapshot name
+  oldStatus   String?
+  newStatus   String?
+  oldCategory String?
+  newCategory String?
+  oldReason   String?
+  newReason   String?
+  oldAssignee String?
+  newAssignee String?
 
   dueDate   DateTime?
   completed Boolean   @default(false)
@@ -159,14 +293,13 @@ model Activity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // one-to-one relation to Task
   task Task?
 }
 
 model Task {
-  id         String   @id @default(uuid())
-  activityId String   @unique
-  activity   Activity @relation(fields: [activityId], references: [id])
+  id             String       @id @default(uuid())
+  leadActivityId String       @unique
+  leadActivity   LeadActivity @relation(fields: [leadActivityId], references: [id])
 
   title          String
   assignedToId   String?
@@ -230,7 +363,7 @@ model FbPageToken {
   updatedAt DateTime @updatedAt
 }
 
-enum ActivityType {
+enum LeadActivityType {
   LEAD_ADDED
   COMMENT // General text note
   CALL // Phone call

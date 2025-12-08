@@ -1,7 +1,25 @@
 import prisma from "../lib/prisma.js";
+import { createUserService, deleteUserService } from "../services/user.service.js";
+import bcrypt from "bcrypt";
+import { nanoid } from "nanoid";
 // import bcrypt from "bcryptjs";
 
 // import { prisma } from "../lib/prisma.js"
+
+export const createUser = async (req, res) => {
+    try {
+        const { password, ...rest } = req.body;
+
+        const user = await createUserService({
+            ...rest,
+            password,
+        });
+
+        return res.status(201).json({ success: true, data: user });
+    } catch (err) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
+};
 
 // ✅ Get all users (with roles and dealer)
 export const getAllUsers = async (req, res) => {
@@ -9,10 +27,28 @@ export const getAllUsers = async (req, res) => {
         const users = await prisma.user.findMany({
             include: {
                 role: true,
-                dealer: true,
+                dealer: {       // the dealer the user belongs to
+                    include: {
+                        packs: true
+                    }
+                },
+                ownerOf: {      // dealers this user owns
+                    include: {
+                        dealer: {
+                            include: {
+                                packs: true
+                            }
+                        }
+                    }
+                }
             },
         });
-        return res.status(200).json({ success: true, data: users });
+
+        return res.status(200).json({
+            success: true,
+            data: users,
+        });
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Internal server error" });
@@ -22,18 +58,36 @@ export const getAllUsers = async (req, res) => {
 // ✅ Get a single user by ID
 export const getUserById = async (req, res) => {
     const { id } = req.params;
+
     try {
         const user = await prisma.user.findUnique({
             where: { id },
             include: {
                 role: true,
                 dealer: true,
+                ownerOf: {
+                    include: {
+                        dealer: {
+                            include: {
+                                packs: {
+                                    where: {
+                                        packType: "LEADS",   // ⭐ ONLY LEADS PACKS
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
             },
         });
-        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         return res.status(200).json({ success: true, data: user });
     } catch (err) {
-        console.error(err);
+        console.error("getUserById error:", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -62,31 +116,71 @@ export const getUsersByDealerId = async (req, res) => {
     }
 };
 
-
 // ✅ Update user by ID
 export const updateUserById = async (req, res) => {
     const { id } = req.params;
-    const { email, password, name, dealerId, roleId } = req.body;
+    const {
+        email,
+        password,
+        name,
+        phone,
+        alternatePhone,
+        location,
+        city,
+        role,               // role name
+        liveDailyTarget,
+        liveWeeklyTarget,
+        liveMonthlyTarget
+    } = req.body;
 
     try {
-        const existingUser = await prisma.user.findUnique({ where: { id } });
-        if (!existingUser) return res.status(404).json({ message: "User not found" });
+        const existingUser = await prisma.user.findUnique({
+            where: { id },
+            include: { role: true, dealer: true }
+        });
 
-        // hash password only if provided
-        let hashedPassword;
+        if (!existingUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // 1. Hash password only if provided
+        let hashedPassword = existingUser.password;
         if (password) {
             hashedPassword = await bcrypt.hash(password, 10);
         }
 
-        // update user
+        // 2. Resolve role (role name → roleId)
+        let roleId = existingUser.roleId;
+        if (role) {
+            const roleRecord = await prisma.role.findUnique({
+                where: { name: role }
+            });
+
+            if (!roleRecord) {
+                return res.status(400).json({ success: false, message: "Invalid role" });
+            }
+            roleId = roleRecord.id;
+        }
+
+        // 3. Update user (dealerId cannot change)
         const updatedUser = await prisma.user.update({
             where: { id },
             data: {
-                email: email || existingUser.email,
-                name: name || existingUser.name,
-                password: hashedPassword || existingUser.password,
-                dealerId: dealerId ?? existingUser.dealerId,
-                roleId: roleId || existingUser.roleId,
+                email: email ?? existingUser.email,
+                name: name ?? existingUser.name,
+                phone: phone ?? existingUser.phone,
+                alternatePhone: alternatePhone ?? existingUser.alternatePhone,
+                location: location ?? existingUser.location,
+                city: city ?? existingUser.city,
+                password: hashedPassword,
+                roleId,
+
+                // targets (optional)
+                liveDailyTarget: liveDailyTarget ?? existingUser.liveDailyTarget,
+                liveWeeklyTarget: liveWeeklyTarget ?? existingUser.liveWeeklyTarget,
+                liveMonthlyTarget: liveMonthlyTarget ?? existingUser.liveMonthlyTarget,
+
+                // DO NOT update dealerId
             },
             include: {
                 role: true,
@@ -95,56 +189,84 @@ export const updateUserById = async (req, res) => {
         });
 
         return res.status(200).json({ success: true, data: updatedUser });
+
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Update user error:", err);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
 // ✅ Delete user by ID
 export const deleteUserById = async (req, res) => {
-    const { id } = req.params;
     try {
-        const deletedUser = await prisma.user.delete({
-            where: { id },
+        const userId = req.params.id;
+
+        const deletedUser = await deleteUserService(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "User deleted successfully",
+            data: deletedUser,
         });
-        return res.json({ message: "User deleted successfully" });
+
     } catch (err) {
-        console.error(err);
+        return res.status(400).json({ success: false, message: err.message });
+    }
+};
+
+// ➕ Add a dealer to user's ownerOf list
+export const addDealerOwner = async (req, res) => {
+    const { id } = req.params;
+    const { dealerId } = req.body;
+
+    try {
+        // Check user
+        const user = await prisma.user.findUnique({ where: { id } });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Check dealer
+        const dealer = await prisma.dealer.findUnique({ where: { id: dealerId } });
+        if (!dealer) return res.status(404).json({ message: "Dealer not found" });
+
+        // Prevent duplicates
+        const existing = await prisma.dealerOwner.findFirst({
+            where: { userId: id, dealerId }
+        });
+        if (existing) {
+            return res.status(400).json({ message: "Already assigned to this dealer" });
+        }
+
+        // Add
+        await prisma.dealerOwner.create({
+            data: { userId: id, dealerId }
+        });
+
+        return res.json({ success: true, message: "Dealer assigned successfully" });
+    } catch (err) {
+        console.error("Add dealer error:", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
 
-// export const bulkUpload = async (req, res) => {
-//     try {
-//         const { data } = req.body
+// ➖ Remove a dealer from owner's list
+export const removeDealerOwner = async (req, res) => {
+    const { id } = req.params;
+    const { dealerId } = req.body;
 
-//         console.log("bulk upload data:", data)
+    try {
+        const relation = await prisma.dealerOwner.findFirst({
+            where: { userId: id, dealerId }
+        });
 
-//         if (!data || !Array.isArray(data)) {
-//             return res.status(400).json({ message: "Invalid data format" })
-//         }
+        if (!relation) {
+            return res.status(400).json({ message: "User is not an owner of this dealer" });
+        }
 
-//         // Optional: validate each record
-//         const requiredFields = ["id", "amount", "status", "email"]
-//         for (const row of data) {
-//             for (const field of requiredFields) {
-//                 if (!row[field]) {
-//                     return res.status(400).json({ message: `Missing field: ${field}` })
-//                 }
-//             }
-//         }
+        await prisma.dealerOwner.delete({ where: { id: relation.id } });
 
-//         // Save to DB (example: insert Payments)
-//         await prisma.payment.createMany({
-//             data,
-//             skipDuplicates: true, // avoid duplicate IDs
-//         })
-
-//         return res.json({ message: "Bulk upload successful", count: data.length })
-//     } catch (err) {
-//         console.error(err)
-//         return res.status(500).json({ message: "Server error" })
-//     }
-// }
-
+        return res.json({ success: true, message: "Dealer removed successfully" });
+    } catch (err) {
+        console.error("Remove dealer error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};

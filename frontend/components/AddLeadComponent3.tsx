@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { createLead } from "@/features/leads/api/lead"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import toast from "react-hot-toast"
+import { TimePickerComponent } from "./TimePickerComponent"
 
 interface Props {
     open: boolean
@@ -24,6 +25,27 @@ interface Props {
 
 export function AddLeadComponent({ open, onOpenChange }: Props) {
     const queryClient = useQueryClient()
+
+    const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined)
+    // const [createdTime, setCreatedTime] = useState("10:30:00")
+    const [createdTime, setCreatedTime] = useState<string | undefined>(undefined)
+    const [phone, setPhone] = useState("");
+    const [phoneError, setPhoneError] = useState("");
+
+    // --- Combine date + time into ISO string ---
+    let createdAt: string | undefined = undefined
+
+    if (createdDate && createdTime) {
+        const [hours, minutes, seconds] = createdTime.split(":")
+        const finalDate = new Date(createdDate)
+
+        finalDate.setHours(Number(hours))
+        finalDate.setMinutes(Number(minutes))
+        finalDate.setSeconds(Number(seconds))
+
+        createdAt = finalDate.toISOString()
+    }
+
 
     // --- Mutation for creating a lead ---
     const { mutate, isPending } = useMutation({
@@ -45,6 +67,13 @@ export function AddLeadComponent({ open, onOpenChange }: Props) {
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+
+        if (!phone.trim()) {
+            setPhoneError("Phone number is required");
+            return;
+        }
+        setPhoneError(""); // clear error
+
         const formData = new FormData(e.currentTarget)
         const data = Object.fromEntries(formData.entries())
 
@@ -55,12 +84,13 @@ export function AddLeadComponent({ open, onOpenChange }: Props) {
             phone: (data.phone as string) || undefined,
             alternatePhone: (data.alternatePhone as string) || undefined,
             oldModel: (data.oldModel as string) || undefined,
-            location: (data.location as string) || undefined,
+            // location: (data.location as string) || undefined,
             city: (data.city as string) || undefined,
             testDrive: data.testDrive === "Yes",
             finance: data.finance === "Yes",
             occupation: (data.occupation as string) || undefined,
             budget: data.budget ? Number(data.budget) : undefined,
+            ...(createdAt ? { createdAt } : {})
         }
 
         mutate(payload)
@@ -97,7 +127,20 @@ export function AddLeadComponent({ open, onOpenChange }: Props) {
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="phone">Phone Number</Label>
-                            <Input id="phone" name="phone" type="tel" />
+                            {/* <Input id="phone" name="phone" type="tel" /> */}
+                            <Input
+                                value={phone}
+                                name="phone"
+                                onChange={(e) => {
+                                    setPhone(e.target.value);
+                                    if (phoneError) setPhoneError("");
+                                }}
+                                className={phoneError ? "border-red-500" : ""}
+                            />
+
+                            {phoneError && (
+                                <p className="text-red-500 text-sm px-1">{phoneError}</p>
+                            )}
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="alternatePhone">Alternate Phone Number</Label>
@@ -107,10 +150,10 @@ export function AddLeadComponent({ open, onOpenChange }: Props) {
                             <Label htmlFor="oldModel">Old Model</Label>
                             <Input id="oldModel" name="oldModel" />
                         </div>
-                        <div className="grid gap-3">
+                        {/* <div className="grid gap-3">
                             <Label htmlFor="location">Location</Label>
                             <Input id="location" name="location" />
-                        </div>
+                        </div> */}
                         <div className="grid gap-3">
                             <Label htmlFor="city">City</Label>
                             <Input id="city" name="city" />
@@ -165,6 +208,13 @@ export function AddLeadComponent({ open, onOpenChange }: Props) {
                             <Label htmlFor="budget">Budget</Label>
                             <Input id="budget" name="budget" type="number" />
                         </div>
+
+                        <TimePickerComponent
+                            date={createdDate}
+                            time={createdTime}
+                            setDate={setCreatedDate}
+                            setTime={setCreatedTime}
+                        />
                         {/* <div className="grid gap-3 sm:col-span-2">
                             <Label htmlFor="remark">Remark</Label>
                             <textarea

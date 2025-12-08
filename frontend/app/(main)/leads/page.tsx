@@ -6,7 +6,6 @@ import { FilterDropdownComponent } from "@/components/FilterDropdownComponent5"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { getLeads, getLeadSources, getLeadStatuses } from "@/features/leads/api/lead"
-import { Lead } from "@/lib/types"
 import { renderCategoryIcon } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
@@ -16,7 +15,7 @@ import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { IconPlus, IconUpload } from "@tabler/icons-react"
 import { BulkUploadComponent } from "@/components/BulkUploadComponent3"
-import { AddLeadComponent } from "@/components/AddLeadComponent3"
+import { AddLeadComponent } from "@/components/AddLeadComponent4"
 import { leadsColumns } from "./columns"
 
 type Filters = {
@@ -153,11 +152,17 @@ export default function Page() {
         const search = String(filterValue).toLowerCase();
         const lead = row.original;
 
+        // const searchable = [
+        //     lead.id || "",
+        //     lead.email || "",
+        //     lead.phone || lead.mobile || "",
+        //     lead.name || "",
+        // ]
         const searchable = [
             lead.id || "",
-            lead.email || "",
-            lead.phone || lead.mobile || "",
-            lead.name || "",
+            lead?.customer?.email || "",
+            lead?.customer?.phone || lead?.customer?.mobile || "",
+            lead?.customer?.name || "",
         ]
             .join(" ")
             .toLowerCase();
@@ -318,38 +323,45 @@ export default function Page() {
                 {/* Filters */}
                 <div className="flex gap-2 px-2">
                     {filtersActive.includes("Status") && (
-                        <FilterDropdownComponent
-                            label="Status"
-                            filterKey="status"
-                            // options={["New", "Contacted", "Converted"]}
-                            options={leadStatuses?.data.map((status: any) => status.name) || []}
-                            selectedValues={filters.status || []}
-                            onChange={handleFilterChange}
-                        />
+                        <div className="pb-2">
+                            <FilterDropdownComponent
+                                label="Status"
+                                filterKey="status"
+                                // options={["New", "Contacted", "Converted"]}
+                                options={leadStatuses?.data.map((status: any) => status.name) || []}
+                                selectedValues={filters.status || []}
+                                onChange={handleFilterChange}
+                            />
+                        </div>
                     )}
 
                     {filtersActive.includes("Category") && (
-                        <FilterDropdownComponent
-                            label="Category"
-                            filterKey="category"
-                            options={["HOT", "WARM", "COLD"]}
-                            selectedValues={filters.category || []}
-                            onChange={handleFilterChange}
-                        />
+                        <div className="pb-2">
+                            <FilterDropdownComponent
+                                label="Category"
+                                filterKey="category"
+                                options={["HOT", "WARM", "COLD"]}
+                                selectedValues={filters.category || []}
+                                onChange={handleFilterChange}
+                            />
+                        </div>
                     )}
 
                     {filtersActive.includes("Source") && (
-                        <FilterDropdownComponent
-                            label="Source"
-                            filterKey="source"
-                            // options={["Website", "Referral", "Social Media"]}
-                            options={leadSources?.data}
-                            selectedValues={filters.source || []}
-                            onChange={handleFilterChange}
-                        />
+                        <div className="pb-2">
+                            <FilterDropdownComponent
+                                label="Source"
+                                filterKey="source"
+                                // options={["Website", "Referral", "Social Media"]}
+                                options={leadSources?.data}
+                                selectedValues={filters.source || []}
+                                onChange={handleFilterChange}
+                            />
+                        </div>
                     )}
 
-                    {filtersActive.includes("Owner") && (
+                    {/* {filtersActive.includes("Owner") && (
+                    <div className="pb-2">
                         <FilterDropdownComponent
                             label="Owner"
                             filterKey="owner"
@@ -357,7 +369,8 @@ export default function Page() {
                             selectedValues={filters.owner || []}
                             onChange={handleFilterChange}
                         />
-                    )}
+</div>
+                    )} */}
                 </div>
             </div>
 

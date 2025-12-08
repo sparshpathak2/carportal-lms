@@ -5,7 +5,7 @@ import {
     getPackById,
     getPackByDealerId,
     updatePack,
-    deletePack
+    removePack
 } from "../controllers/pack.controller.js";
 
 const router = express.Router();
@@ -26,6 +26,6 @@ router.get("/dealer/:dealerId", getPackByDealerId);
 router.put("/:id", updatePack);
 
 // Delete pack
-router.delete("/:id", deletePack);
+router.delete("/:id", removePack);
 
 export default router;

@@ -19,6 +19,10 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  phone     String?
+  alternatePhone  String?
+  location  String?
+  city      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -31,12 +35,17 @@ model User {
   role   Role   @relation(fields: [roleId], references: [id])
 
   // lead assignment target for the user
-  leadTarget Int?
+  liveDailyTarget     Int    @default(0)
+  liveWeeklyTarget    Int    @default(0)
+  liveMonthlyTarget   Int    @default(0)
 
   // Dealers this user owns (many-to-many)
   ownerOf DealerOwner[]
 
+  userDealerMetrics UserDealerMetrics[]
+
   sessions Session[]
+  metrics   UserMetrics[]
 }
 
 model Dealer {
@@ -49,11 +58,18 @@ model Dealer {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
+  // LIVE targets for dealer
+  liveDailyTarget    Int @default(0)
+  liveWeeklyTarget   Int @default(0)
+  liveMonthlyTarget  Int @default(0)
+
   users User[]
   packs Pack[]
 
   // Users who own this dealer
   owners DealerOwner[]
+  metrics DealerMetrics[]
+  userDealerMetrics UserDealerMetrics[]
 }
 
 enum DealerType {
@@ -83,6 +99,8 @@ model DealerOwner {
   dealer Dealer @relation(fields: [dealerId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  @@unique([dealerId])
 }
 
 model Pack {
@@ -93,6 +111,7 @@ model Pack {
   cycleStartDate DateTime
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  packType PackType @default(LEADS)
 
   dealerId String
   dealer   Dealer @relation(fields: [dealerId], references: [id])
@@ -105,3 +124,80 @@ model Session {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+enum PackType {
+  LEADS
+  DIGITAL_MARKETING
+}
+
+model UserMetrics {
+  id        String   @id @default(uuid())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+
+  // Lead performance
+  leadsAssigned     Int @default(0)
+  leadsDelivered    Int @default(0)
+  leadsConverted    Int @default(0)
+  leadsUnattended   Int @default(0)
+  pendingFollowups  Int @default(0)
+
+  // Response time (in minutes)
+  avgResponseTime   Int @default(0)
+
+  // Performance KPI
+  targetCompletionRate Float @default(0) // %
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DealerMetrics {
+  id           String   @id @default(uuid())
+  dealerId     String
+  dealer       Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  date         DateTime
+  
+  leadsDelivered  Int     @default(0)
+  leadsConverted Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserDealerMetrics {
+  id        String   @id @default(uuid())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  dealerId  String
+  dealer    Dealer   @relation(fields: [dealerId], references: [id])
+
+  date      DateTime
+
+  // Lead performance
+  leadsAssigned     Int @default(0)
+  leadsDelivered    Int @default(0)
+  leadsConverted    Int @default(0)
+  leadsUnattended   Int @default(0)
+  pendingFollowups  Int @default(0)
+
+  // Response time (in minutes)
+  avgResponseTime   Int @default(0)
+
+  // Performance KPI
+  targetCompletionRate Float @default(0) // %
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dealerId, date])
+}
+
+
+

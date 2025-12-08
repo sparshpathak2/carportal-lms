@@ -4,7 +4,7 @@ import React from "react";
 import { useParams } from "next/navigation";
 import { getActivitiesByLeadId } from "@/features/leads/api/lead";
 import { IconCreditCard, IconFilter, IconSteeringWheel, IconMessage, IconExclamationMark, IconMailForward, IconPhoneOutgoing, IconUserCheck, IconCalendarTime, IconPhoneDone, IconUser, IconAlertCircle, IconUserPlus, IconTarget } from "@tabler/icons-react";
-import { Activity } from "@/lib/types";
+import { LeadActivity } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { activityTypeColors } from "@/app/constants/constants";
 
@@ -40,7 +40,7 @@ export default function LeadActivityHistoryComponent() {
     const { leadId } = useParams<{ leadId: string }>();
 
     // --- React Query ---
-    const { data: activities = [], isLoading, isError } = useQuery<Activity[]>({
+    const { data: activities = [], isLoading, isError } = useQuery<LeadActivity[]>({
         queryKey: ["leadActivities", leadId],
         queryFn: async () => {
             if (!leadId) return [];
@@ -81,7 +81,7 @@ export default function LeadActivityHistoryComponent() {
     )
 
     // --- Group by month (in descending order) ---
-    const grouped = activities.reduce((acc: Record<string, Activity[]>, activity) => {
+    const grouped = activities.reduce((acc: Record<string, LeadActivity[]>, activity) => {
         const date = new Date(activity.createdAt);
         const monthKey = date.toLocaleString("default", { month: "short", year: "numeric" }); // e.g. "September 2025"
         if (!acc[monthKey]) acc[monthKey] = [];

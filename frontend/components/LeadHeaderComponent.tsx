@@ -3,14 +3,16 @@
 import { leadCategoryColors, leadStatusColors } from "@/app/constants/constants"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Dealer, Lead, LeadLostReason, LeadStatus, User } from "@/lib/types"
+import { Dealer, Lead, LeadAssignment, LeadCategory, LeadLostReason, LeadStatus, User } from "@/lib/types"
 import { renderCategoryIcon } from "@/lib/utils"
 import { IconCalendarPlus, IconFilter, IconPhone, IconTarget, IconUserStar } from "@tabler/icons-react"
 import { Button } from "./ui/button"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { LeadOwnerModalComponent } from "./LeadOwnerModalComponent"
 import { LeadStatusModalComponent } from "./LeadStatusModalComponent"
 import { LeadCategoryModalComponent } from "./LeadCategoryModalComponent"
+import { SessionContext } from "./SessionProvider"
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
 
 type LeadHeaderProps = {
     lead: Lead
@@ -26,14 +28,24 @@ type LeadHeaderProps = {
 }
 
 export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostReasons, updateLeadMutation, users, dealers }: LeadHeaderProps) {
+    const { user, loading, refreshSession } = useContext(SessionContext)
+
+    // ✅ Compute resolved values once
+    const {
+        resolvedStatus,
+        resolvedCategory,
+        resolvedAssignedToName,
+        resolvedDateCreated
+    } = resolveLeadComputedFields(lead, user)
+
+    console.log("resolvedDateCreated:", resolvedDateCreated)
+
     const [isOwnerModalOpen, setOwnerModalOpen] = useState(false)
     const [isStatusModalOpen, setStatusModalOpen] = useState(false)
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false)
 
-    const status = lead?.status?.name || "NA"
-    const leadStatusClass = leadStatusColors[status] || "bg-gray-100 text-gray-800 border border-gray-300"
-    const categoryClass = leadCategoryColors[lead?.category] || "bg-gray-100 text-gray-800 border border-gray-300"
-    // console.log("lead category:", lead?.category)
+    const leadStatusClass = leadStatusColors[resolvedStatus] || "bg-gray-100 text-gray-800 border border-gray-300"
+    const categoryClass = leadCategoryColors[resolvedCategory] || "bg-gray-100 text-gray-800 border border-gray-300"
 
     return (
         <>
@@ -50,28 +62,39 @@ export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostR
                 {/* Lead Info */}
                 <div className="flex flex-col gap-2 w-full">
                     <div className="flex items-center gap-4">
-                        <div className="font-semibold text-xl">{lead?.name}</div>
+                        <div className="font-semibold text-xl">{lead?.customer?.name}</div>
                         <Badge className={categoryClass}>
-                            {renderCategoryIcon(lead)}
-                            {lead?.category || "NA"}
+                            {renderCategoryIcon(resolvedCategory)}
+                            {/* {lead?.category || "NA"} */}
+                            {resolvedCategory || "COLD"}
                         </Badge>
                     </div>
 
                     <div className="flex justify-between items-center w-full">
 
                         <div className="flex gap-4 items-center">
-                            <Badge className={leadStatusClass}>{status || "NA"}</Badge>
+                            {/* <Badge className={leadStatusClass}>{status || "NA"}</Badge> */}
+                            <Badge className={leadStatusClass}>{resolvedStatus || "New"}</Badge>
 
                             <div className="flex gap-1 items-center">
                                 <IconPhone className="w-4 h-4" />
-                                <div>{lead?.phone || "NA"}</div>
+                                <div>{lead?.customer?.phone || "NA"}</div>
                             </div>
 
                             <div className="flex gap-1 items-center">
                                 <IconCalendarPlus className="w-4 h-4" />
-                                <div>
+                                {/* <div>
                                     {lead?.createdAt
                                         ? new Date(lead.createdAt).toLocaleDateString("en-US", {
+                                            year: "numeric",
+                                            month: "short",
+                                            day: "numeric",
+                                        })
+                                        : "NA"}
+                                </div> */}
+                                <div>
+                                    {resolvedDateCreated
+                                        ? new Date(resolvedDateCreated).toLocaleDateString("en-US", {
                                             year: "numeric",
                                             month: "short",
                                             day: "numeric",
@@ -82,43 +105,10 @@ export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostR
 
                             <div className="flex gap-1 items-center">
                                 <IconUserStar className="w-4 h-4" />
-                                <div>{lead?.assignedToName || "NA"}</div>
+                                <div>{resolvedAssignedToName || "NA"}</div>
                             </div>
                         </div>
 
-                        {/* <div className="flex gap-2">
-
-                            <div className="flex gap-[-1px]">
-                                <Button
-                                    size="sm"
-                                    onClick={() => setStatusModalOpen(true)}
-                                    className="rounded-r-none"
-                                >
-                                    <IconFilter className="text-white" />
-                                    Status
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => setCategoryModalOpen(true)}
-                                    // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
-                                    className="rounded-l-none border-l-1 border-l-white"
-                                >
-                                    <IconTarget className="text-white" />
-                                    Category
-                                </Button>
-                            </div>
-
-                            <Button
-                                size="sm"
-                                onClick={() => setOwnerModalOpen(true)}
-                                // className="rounded-r-none bg-white text-blue-600 border border-blue-600"
-                                className=""
-                            >
-                                <IconUserStar className="text-white" />
-                                Owner
-                            </Button>
-
-                        </div> */}
                         <div className="flex gap-[-1px]">
 
                             {/* <div className="flex gap-[-1px]"> */}

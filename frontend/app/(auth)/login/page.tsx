@@ -28,11 +28,14 @@ export default function LoginPage() {
                     </div>
                     Acme Inc.
                 </a> */}
-                <img
-                    src="/logo-14.svg"
-                    alt="LMS Supreme Logo"
-                    className="h-14 rounded-lg"
-                />
+                {/* <img
+                    // src="/logo-14.svg"
+                    src="/carportal-logo-blue.png"
+                    // alt="LMS Supreme Logo"
+                    alt="Carportal Logo"
+                    // className="h-14 rounded-lg"
+                    className="h-14 w-fit text-center rounded-lg"
+                /> */}
                 <LoginForm />
             </div>
         </div>

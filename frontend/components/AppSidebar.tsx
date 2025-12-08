@@ -29,25 +29,25 @@ const data = {
     },
     versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
     navMain: [
-        {
-            title: "Overview",
-            url: "#",
-            items: [
-                {
-                    title: "Home",
-                    url: "#",
-                },
-            ],
-        },
+        // {
+        //     title: "Overview",
+        //     url: "#",
+        //     items: [
+        //         {
+        //             title: "Home",
+        //             url: "#",
+        //         },
+        //     ],
+        // },
         {
             title: "Leads Management",
             url: "#",
             items: [
-                {
-                    title: "Dashboard",
-                    url: "/leads/dashboard",
-                    exact: true
-                },
+                // {
+                //     title: "Dashboard",
+                //     url: "/leads/dashboard",
+                //     exact: true
+                // },
                 {
                     title: "All Leads",
                     url: "/leads",
@@ -55,24 +55,24 @@ const data = {
                 }
             ],
         },
-        {
-            title: "User Management",
-            url: "#",
-            items: [
-                {
-                    title: "All Users",
-                    url: "/users",
-                },
-                {
-                    title: "Dealers",
-                    url: "/dealers",
-                },
-                {
-                    title: "Packs",
-                    url: "#",
-                },
-            ],
-        },
+        // {
+        //     title: "User Management",
+        //     url: "#",
+        //     items: [
+        //         {
+        //             title: "All Users",
+        //             url: "/users",
+        //         },
+        //         {
+        //             title: "Dealers",
+        //             url: "/dealers",
+        //         },
+        //         {
+        //             title: "Packs",
+        //             url: "#",
+        //         },
+        //     ],
+        // },
     ],
 }
 
@@ -107,8 +107,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <GalleryVerticalEnd className="size-4" />
                     </div> */}
                     <img
-                        src="/logo-14-favicon.svg"
-                        alt="LMS Supreme Logo"
+                        // src="/logo-14.svg"
+                        src="/carportal-logo-blue.png"
+                        // alt="LMS Supreme Logo"
+                        alt="Carportal Logo"
                         // className="h-12 rounded-lg"
                         className="h-10"
                     />

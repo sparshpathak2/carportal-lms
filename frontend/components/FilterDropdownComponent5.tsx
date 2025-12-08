@@ -47,7 +47,7 @@ export function FilterDropdownComponent({
                 sideOffset={6}
                 className="p-1 w-48"
             >
-                {options.map((option) => (
+                {options?.map((option) => (
                     <div
                         key={option}
                         onClick={() => handleCheckboxChange(option)}

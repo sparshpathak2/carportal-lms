@@ -4,9 +4,11 @@ import cookieParser from "cookie-parser";
 import "dotenv/config";
 
 import leadRoutes from "./routes/lead.routes.js";
+import customerRoutes from "./routes/customer.routes.js";
 import filterRoutes from "./routes/filter.routes.js";
 import leadActivityRoutes from "./routes/leadActivity.routes.js";
 import leadStatusRoutes from "./routes/leadStatus.routes.js";
+import leadSourcesRoutes from "./routes/leadSources.routes.js";
 import leadLostReason from "./routes/leadLostReason.routes.js";
 import leadCommentRoutes from "./routes/leadComment.routes.js";
 import integrationRoutes from "./routes/integrations.routes.js";
@@ -50,9 +52,11 @@ app.use((req, res, next) => {
 
 // ✅ Mount all routes
 app.use("/leads", leadRoutes);
+app.use("/customers", customerRoutes);
 app.use("/filters", filterRoutes);
 app.use("/activities", leadActivityRoutes);
 app.use("/statuses", leadStatusRoutes);
+app.use("/sources", leadSourcesRoutes);
 app.use("/leadLostReasons", leadLostReason);
 app.use("/comments", leadCommentRoutes);
 app.use("/integrations", integrationRoutes);

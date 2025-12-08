@@ -92,15 +92,15 @@ export const usersColumns: ColumnDef<User>[] = [
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => {
-            const leadId = row.original.id // ✅ make sure id exists in Lead type
-            const leadName = row.getValue("name") as string
+            const userId = row.original.id // ✅ make sure id exists in Lead type
+            const userName = row.getValue("name") as string
 
             return (
                 <a
-                    href={`/leads/${leadId}`}
+                    href={`/users/${userId}`}
                     className="text-blue-600 hover:underline"
                 >
-                    {leadName}
+                    {userName}
                 </a>
             )
         },

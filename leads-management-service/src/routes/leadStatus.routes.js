@@ -7,7 +7,7 @@ const router = Router();
 router.get("/", getLeadStatuses)
 router.get("/:id", getLeadStatusById)
 router.post("/", createLeadStatus);
-router.get("/:id", updateLeadStatus)
-router.get("/:id", deleteLeadStatus)
+router.put("/:id", updateLeadStatus)
+router.delete("/:id", deleteLeadStatus)
 
 export default router;

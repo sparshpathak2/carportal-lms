@@ -13,12 +13,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { useEffect, useMemo, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { Dealer, Lead, LeadLostReason, LeadStatus, User } from "@/lib/types"
 import toast from "react-hot-toast"
 import { Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getUsersByDealerId } from "@/features/users/api/user"
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
+import { SessionContext } from "./SessionProvider"
 
 type Props = {
     open: boolean
@@ -40,6 +42,8 @@ export function LeadOwnerModalComponent({
     updateLeadMutation
 }: Props) {
 
+    const { user } = useContext(SessionContext)
+    const loggedInUser = user
     const [dealerId, setDealerId] = useState<string | undefined>(undefined);
     const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined);
 
@@ -47,13 +51,17 @@ export function LeadOwnerModalComponent({
     const [initialDealerId, setInitialDealerId] = useState<string | undefined>(undefined)
     const [initialOwnerId, setInitialOwnerId] = useState<string | undefined>(undefined)
 
-    // Reset form when modal opens
+    const resolved = useMemo(() => resolveLeadComputedFields(lead, loggedInUser), [
+        lead,
+        loggedInUser,
+    ]);
+
     useEffect(() => {
         if (open && lead) {
-            setDealerId(lead.dealerId || undefined)
-            setSelectedUserId(lead.assignedToId || undefined)
-            setInitialDealerId(lead.dealerId || undefined)
-            setInitialOwnerId(lead.assignedToId || undefined)
+            setDealerId(resolved.resolvedDealerId || undefined)
+            setSelectedUserId(resolved.resolvedAssignedToId || undefined)
+            setInitialDealerId(resolved.resolvedDealerId || undefined)
+            setInitialOwnerId(resolved.resolvedAssignedToId || undefined)
         }
     }, [open, lead])
 
@@ -178,11 +186,22 @@ export function LeadOwnerModalComponent({
                                         <SelectValue placeholder={dealerUsersLoading ? "Loading..." : "Select User"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {usersByDealerId.map((u) => (
+                                        {/* {usersByDealerId.map((u) => (
                                             <SelectItem key={u.id} value={u.id}>
                                                 {u.name}
                                             </SelectItem>
-                                        ))}
+                                        ))} */}
+                                        {usersByDealerId.length === 0 ? (
+                                            <SelectItem value="na" disabled>
+                                                NA
+                                            </SelectItem>
+                                        ) : (
+                                            usersByDealerId.map((u) => (
+                                                <SelectItem key={u.id} value={u.id}>
+                                                    {u.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -39,6 +39,9 @@ router.use("/roles", buildProxy("/roles"));
 router.use("/dealers", buildProxy("/dealers"));
 
 
+router.use("/dealerOwners", buildProxy("/dealerOwners"));
+
+
 // Packs
 router.use("/packs", buildProxy("/packs"));
 

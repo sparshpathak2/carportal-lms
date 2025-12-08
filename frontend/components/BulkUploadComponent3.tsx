@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import * as XLSX from "xlsx"
 import toast from "react-hot-toast"
 import { bulkUploadLeads } from "@/features/leads/api/lead"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 // Required columns in sheet
 const REQUIRED_COLUMNS = ["name", "email", "phone"]
@@ -77,6 +78,19 @@ export function BulkUploadComponent({
     onOpenChange: (open: boolean) => void
 }) {
     const [file, setFile] = useState<File | null>(null)
+    const queryClient = useQueryClient()
+
+    const mutation = useMutation({
+        mutationFn: (data: any[]) => bulkUploadLeads(data),
+        onSuccess: () => {
+            toast.success("Bulk upload successful!")
+            queryClient.invalidateQueries({ queryKey: ["leads"] }) // refresh leads
+            onOpenChange(false)
+        },
+        onError: (error: any) => {
+            toast.error(error?.message || "Failed to upload")
+        },
+    })
 
     const handleUpload = async () => {
         if (!file) {
@@ -122,9 +136,7 @@ export function BulkUploadComponent({
             })
 
             // ✅ Send to backend
-            await bulkUploadLeads(validData)
-            toast.success("Bulk upload successful!")
-            onOpenChange(false) // close dialog
+            mutation.mutate(validData)
         } catch (error: any) {
             console.error(error)
             toast.error(error?.message || "Failed to upload")

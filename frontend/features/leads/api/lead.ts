@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
-import { Activity, ActivityType } from "@/lib/types";
+import { LeadActivity, LeadActivityType } from "@/lib/types";
 
 // -------------------- LEADS --------------------
 
@@ -37,10 +37,11 @@ export const getLeadsWithFilters = async (filters?: Record<string, any>) => {
   const queryParams = filters
     ? new URLSearchParams(filters as any).toString()
     : "";
-  const res = await axiosInstance.get(`/lead/leads${queryParams ? `?${queryParams}` : ""}`);
+  const res = await axiosInstance.get(
+    `/lead/leads${queryParams ? `?${queryParams}` : ""}`
+  );
   return res.data;
 };
-
 
 // Get a single lead by ID
 export const getLeadById = async (id: string) => {
@@ -66,14 +67,14 @@ export const bulkUploadLeads = async (data: any[]) => {
   return res.data;
 };
 
-
 // -------------------- ACTIVITIES --------------------
 
 // Fetch activities by lead ID
 export const getActivitiesByLeadId = async (leadId: string) => {
-  const res = await axiosInstance.get<{ success: boolean; data: Activity[] }>(
-    `/lead/activities/lead/${leadId}`
-  );
+  const res = await axiosInstance.get<{
+    success: boolean;
+    data: LeadActivity[];
+  }>(`/lead/activities/lead/${leadId}`);
   return res.data;
 };
 
@@ -81,10 +82,9 @@ export const getActivitiesByLeadId = async (leadId: string) => {
 
 // Fetch distinct lead sources
 export const getLeadSources = async () => {
-  const res = await axiosInstance.get("/lead/leads/sources");
+  const res = await axiosInstance.get("/lead/sources");
   return res.data;
 };
-
 
 // -------------------- STATUSES --------------------
 
@@ -101,13 +101,19 @@ export const getLeadStatusById = async (id: string) => {
 };
 
 // Create a new status
-export const createLeadStatus = async (data: { name: string; order?: number }) => {
+export const createLeadStatus = async (data: {
+  name: string;
+  order?: number;
+}) => {
   const res = await axiosInstance.post("/lead/statuses", data);
   return res.data;
 };
 
 // Update a status
-export const editLeadStatus = async (id: string, data: { name?: string; order?: number }) => {
+export const editLeadStatus = async (
+  id: string,
+  data: { name?: string; order?: number }
+) => {
   const res = await axiosInstance.put(`/lead/statuses/${id}`, data);
   return res.data;
 };
@@ -131,8 +137,9 @@ export const getCommentsByLeadId = async (leadId: string) => {
 // Create a new comment
 export const createComment = async (data: {
   leadId: string;
-  type: ActivityType;
+  type: LeadActivityType;
   description: string;
+  leadAssignmentId?: string | null;
   dueDate?: string; // optional ISO string
 }) => {
   const res = await axiosInstance.post<{ success: boolean; data: any }>(
@@ -161,7 +168,6 @@ export const deleteComment = async (id: string) => {
   );
   return res.data;
 };
-
 
 // -------------------- USER FILTERS --------------------
 

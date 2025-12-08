@@ -9,8 +9,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const renderCategoryIcon = (lead: Lead) => {
-  switch (lead?.category) {
+export const renderCategoryIcon = (leadCategory: "HOT" | "WARM" | "COLD") => {
+  switch (leadCategory) {
     case "HOT":
       return <IconFlame size={14} className="text-red-500" />
     case "WARM":

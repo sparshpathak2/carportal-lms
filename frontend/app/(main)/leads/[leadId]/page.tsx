@@ -103,8 +103,8 @@ export default function LeadDetailPage() {
         )
     }
 
-    const bgColor = avatarBgColors[stringToColorIndex(lead?.name || lead?.id)]
-    const firstLetter = lead?.name ? lead.name.charAt(0).toUpperCase() : '?'
+    const bgColor = avatarBgColors[stringToColorIndex(lead?.customer?.name || lead?.id)]
+    const firstLetter = lead?.customer?.name ? lead.customer.name.charAt(0).toUpperCase() : '?'
 
 
     // Get lost reasons for LOST status
