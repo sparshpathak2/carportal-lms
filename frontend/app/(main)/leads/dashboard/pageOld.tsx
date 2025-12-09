@@ -2,10 +2,7 @@
 
 import { useParams, usePathname } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLeadById, getLeadStatuses, editLead, getLeads } from '@/features/leads/api/lead'
-import LeadDetailsForm from '@/components/LeadDetailsComponent'
-import LeadActivityComponent from '@/components/LeadActivityComponent'
-import LeadHeader from '@/components/LeadHeaderComponent'
+import { getLeadStatuses, editLead, getLeads } from '@/features/leads/api/lead'
 import { Loader2, CircleAlert } from 'lucide-react'
 import { avatarBgColors } from '@/app/constants/constants'
 import { Lead, LeadStatus } from '@/lib/types'
