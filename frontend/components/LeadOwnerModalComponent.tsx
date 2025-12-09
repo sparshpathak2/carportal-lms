@@ -161,11 +161,22 @@ export function LeadOwnerModalComponent({
                                         <SelectValue placeholder="Select Dealer" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {dealers?.map((d) => (
+                                        {/* {dealers?.map((d) => (
                                             <SelectItem key={d.id} value={d.id}>
                                                 {d.name}
                                             </SelectItem>
-                                        ))}
+                                        ))} */}
+                                        {(!dealers || dealers.length === 0) ? (
+                                            <SelectItem value="na" disabled>
+                                                NA
+                                            </SelectItem>
+                                        ) : (
+                                            dealers.map((d) => (
+                                                <SelectItem key={d.id} value={d.id}>
+                                                    {d.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
