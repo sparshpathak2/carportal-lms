@@ -64,6 +64,10 @@ io.on("connection", (socket) => {
 });
 
 // ✅ Start server
-httpServer.listen(PORT, () => {
-    console.log(`✅ Notification-Service running on port ${PORT}`);
+// Start server
+// app.listen(PORT, '127.0.0.1', () => {
+//     console.log(`🚀 Notification Service is running on http://127.0.0.1:${PORT}`);
+// });
+httpServer.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 Notification Service is running on http://127.0.0.1:${PORT}`);
 });

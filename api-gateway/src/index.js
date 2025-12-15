@@ -59,7 +59,7 @@ app.get("/health", (req, res) => {
 });
 
 // ✅ 6. Start server
-app.listen(PORT, () => {
-    console.log(`🚀 API Gateway running on port ${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 API Gateway running on http://127.0.0.1:${PORT}`);
     console.log(`🌍 Public webhook endpoint: /api/integrations/fb/webhook`);
 });

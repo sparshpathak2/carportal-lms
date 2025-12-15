@@ -42,7 +42,7 @@ app.get("/health", (req, res) => {
     res.json({ status: "ok", service: "user-service" });
 });
 
-// Start service
-app.listen(PORT, () => {
-    console.log(`✅ User-Service running on port ${PORT}`);
+// Start server
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 User Service is running on http://127.0.0.1:${PORT}`);
 });

@@ -67,7 +67,7 @@ app.get("/health", (req, res) => {
 });
 
 // ✅ Start server
-app.listen(PORT, () => {
-    console.log(`✅ Leads Service running on port ${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`✅ Leads Service running on http://127.0.0.1:${PORT}`);
     console.log(`🌍 Public webhook endpoint: /integrations/fb/webhook`);
 });
