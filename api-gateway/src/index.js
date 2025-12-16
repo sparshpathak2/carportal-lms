@@ -10,6 +10,10 @@ import notificationsRoutes from "./routes/notification.routes.js";
 import { authMiddleware } from "./middlewares/auth.middleware.js";
 
 const app = express();
+
+/* 🔥 ADD THIS LINE HERE */
+app.set("trust proxy", 1);
+
 const PORT = process.env.PORT || 3001;
 
 // 🌐 Base URLs

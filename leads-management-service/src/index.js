@@ -15,6 +15,10 @@ import integrationRoutes from "./routes/integrations.routes.js";
 import { attachUser } from "./middlewares/attachUser.middleware.js";
 
 const app = express();
+
+/* 🔥 ADD THIS LINE HERE */
+app.set("trust proxy", 1);
+
 const PORT = process.env.PORT || 3003;
 
 // ✅ Capture raw body for signature verification (required for Facebook webhooks)

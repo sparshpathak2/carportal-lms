@@ -9,6 +9,10 @@ import { attachUser } from "./middlewares/attachUser.middleware.js";
 import notificationRoutes from "./routes/notification.routes.js";
 
 const app = express();
+
+/* 🔥 ADD THIS LINE HERE */
+app.set("trust proxy", 1);
+
 const httpServer = createServer(app);
 
 // ✅ Socket.IO setup

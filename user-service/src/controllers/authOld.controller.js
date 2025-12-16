@@ -3,68 +3,50 @@ import prisma from "../lib/prisma.js";
 import { v4 as uuidv4 } from "uuid";
 import { nanoid } from "nanoid";
 
-import {
-    setSessionCookie,
-    clearSessionCookie,
-} from "../utils/sessionCookie.js";
-
-/**
- * LOGIN
- */
+// Login controller
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            return res.status(401).json({ message: "User does not exists" });
-        }
+        if (!user) return res.status(401).json({ message: "User does not exists" });
+
+        console.log("user:", user)
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
+        if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
         const sessionId = uuidv4();
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+        // const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30min
 
         await prisma.session.create({
-            data: {
-                id: sessionId,
-                userId: user.id,
-                expiresAt,
-            },
+            data: { id: sessionId, userId: user.id, expiresAt },
         });
 
-        // ✅ CENTRALIZED COOKIE HANDLING
-        setSessionCookie(req, res, sessionId);
-
-        return res.json({
-            message: "Login successful",
-            user,
+        res.cookie("sessionId", sessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            // maxAge: 1000 * 60 * 60 * 24,
+            maxAge: 1000 * 60 * 30,
         });
+
+        return res.json({ message: "Login successful", user });
     } catch (err) {
         console.error("Login error:", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
 
-/**
- * LOGOUT
- */
+// Logout controller
 export const logout = async (req, res) => {
     try {
         const sessionId = req.cookies?.sessionId;
-
         if (sessionId) {
-            await prisma.session.deleteMany({
-                where: { id: sessionId },
-            });
-
-            // ✅ CENTRALIZED COOKIE CLEAR
-            clearSessionCookie(req, res);
+            await prisma.session.deleteMany({ where: { id: sessionId } });
+            res.clearCookie("sessionId");
         }
-
         return res.json({ message: "Logged out" });
     } catch (error) {
         console.error("Logout error:", error);
@@ -72,15 +54,10 @@ export const logout = async (req, res) => {
     }
 };
 
-/**
- * VERIFY SESSION
- */
 export const verifySession = async (req, res) => {
     try {
-        const sessionId = req.cookies?.sessionId;
-        if (!sessionId) {
-            return res.json({ valid: false });
-        }
+        const sessionId = req.cookies.sessionId;
+        if (!sessionId) return res.json({ valid: false });
 
         const session = await prisma.session.findUnique({
             where: { id: sessionId },
@@ -98,10 +75,8 @@ export const verifySession = async (req, res) => {
             return res.json({ valid: false });
         }
 
-        const safeUser = {
-            ...session.user,
-            password: undefined,
-        };
+        // Keep all fields, just remove password
+        const safeUser = { ...session.user, password: undefined };
 
         return res.json({
             valid: true,
@@ -109,33 +84,27 @@ export const verifySession = async (req, res) => {
         });
     } catch (error) {
         console.error("VerifySession error:", error);
-        return res.status(500).json({
-            message: "Server error during session verification",
-        });
+        return res.status(500).json({ message: "Server error during session verification" });
     }
 };
 
-/**
- * SIGNUP
- */
 export const signup = async (req, res) => {
     try {
         const { email, password, name, dealerId, role } = req.body;
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
-
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: "Email already registered",
-            });
+            return res.status(400).json({ success: false, message: "Email already registered" });
         }
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Default role = GUEST if none provided
         const selectedRole = role || "GUEST";
 
+        // Ensure role exists
         const roleRecord = await prisma.role.upsert({
             where: { name: selectedRole },
             update: {},
@@ -145,6 +114,7 @@ export const signup = async (req, res) => {
             },
         });
 
+        // Create user with single roleId
         const newUser = await prisma.user.create({
             data: {
                 id: nanoid(10),
@@ -157,30 +127,29 @@ export const signup = async (req, res) => {
             include: { role: true },
         });
 
+        // Create session
         const sessionId = uuidv4();
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 min
 
         await prisma.session.create({
-            data: {
-                id: sessionId,
-                userId: newUser.id,
-                expiresAt,
-            },
+            data: { id: sessionId, userId: newUser.id, expiresAt },
         });
 
-        // ✅ CENTRALIZED COOKIE HANDLING
-        setSessionCookie(req, res, sessionId);
-
-        return res.status(201).json({
-            success: true,
-            message: "Signup successful",
-            user: newUser,
+        // Set cookie
+        res.cookie("sessionId", sessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 1000 * 60 * 30,
         });
+
+        return res
+            .status(201)
+            .json({ success: true, message: "Signup successful", user: newUser });
     } catch (error) {
         console.error("Signup error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+
