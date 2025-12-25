@@ -51,7 +51,7 @@ export default function LeadActivityComponent({ lead }: Props) {
             {/* Tab content */}
             <div className="flex-1 p-4 overflow-y-auto">
                 {activeTab === "comments" && <LeadCommentsComponent lead={lead} />}
-                {activeTab === "history" && <LeadActivityHistoryComponent />}
+                {activeTab === "history" && <LeadActivityHistoryComponent lead={lead} />}
                 {activeTab === "tasks" && <LeadTasksComponent />}
             </div>
         </div>

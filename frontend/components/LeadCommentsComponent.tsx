@@ -100,6 +100,8 @@ export default function LeadCommentsComponent({ lead }: Props) {
 
     const comments = data?.data ?? [] // API returns { success, data }
 
+    console.log("lead at comments section:", lead)
+
     // const handleAddComment = async () => {
     //     if (!newComment.trim() || !activityType) return
 

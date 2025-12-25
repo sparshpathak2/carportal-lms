@@ -13,10 +13,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { useEffect, useMemo, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { Lead, LeadLostReason, LeadStatus } from "@/lib/types"
 import toast from "react-hot-toast"
 import { Loader2 } from "lucide-react"
+import { SessionContext } from "./SessionProvider"
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
 
 type Props = {
     open: boolean
@@ -38,6 +40,16 @@ export function LeadStatusModalComponent({
     isSaving,
     updateLeadMutation
 }: Props) {
+
+    const { user, loading, refreshSession } = useContext(SessionContext)
+
+    // ✅ Compute resolved values once
+    const {
+        resolvedStatus,
+        resolvedCategory,
+        resolvedAssignedToName,
+        resolvedDateCreated
+    } = resolveLeadComputedFields(lead, user)
 
     const [formData, setFormData] = useState({
         status: lead?.status?.name || "",
@@ -62,7 +74,8 @@ export function LeadStatusModalComponent({
         if (open) {
             // Reset when reopened with fresh data
             setFormData({
-                status: lead?.status?.name || "",
+                // status: lead?.status?.name || "",
+                status: resolvedStatus || "New",
                 lostReason: lead?.lostReason?.name || "",
             })
         }

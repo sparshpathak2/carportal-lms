@@ -120,3 +120,8 @@ dist
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
 /src/generated/prisma
+
+
+# Ignore PM2 ecosystem files
+ecosystem.config.js
+ecosystem.config.cjs

@@ -13,11 +13,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { useEffect, useMemo, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { Lead, LeadCategory, LeadLostReason, LeadStatus } from "@/lib/types"
 import toast from "react-hot-toast"
 import { Loader2 } from "lucide-react"
 import { leadCategory } from "@/app/constants/constants"
+import { SessionContext } from "./SessionProvider"
+import { resolveLeadComputedFields } from "@/lib/leadResolution"
 
 type Props = {
     open: boolean
@@ -39,6 +41,15 @@ export function LeadCategoryModalComponent({
     isSaving,
     updateLeadMutation
 }: Props) {
+    const { user, loading, refreshSession } = useContext(SessionContext)
+
+    // ✅ Compute resolved values once
+    const {
+        resolvedStatus,
+        resolvedCategory,
+        resolvedAssignedToName,
+        resolvedDateCreated
+    } = resolveLeadComputedFields(lead, user)
 
     const [formData, setFormData] = useState<{ category: LeadCategory | "" }>({
         category: lead?.category || "",
@@ -46,22 +57,31 @@ export function LeadCategoryModalComponent({
 
     const [initialCategory, setInitialCategory] = useState("")
 
-    useEffect(() => {
-        if (open) {
-            const initialCategoryValue = lead?.category || ""
-            setFormData({ category: initialCategoryValue })
-            setInitialCategory(initialCategoryValue)
-        }
-    }, [open, lead])
+    // useEffect(() => {
+    //     if (open) {
+    //         const initialCategoryValue = lead?.category || ""
+    //         setFormData({ category: initialCategoryValue })
+    //         setInitialCategory(initialCategoryValue)
+    //     }
+    // }, [open, lead])
 
     useEffect(() => {
         if (open) {
-            // Reset when reopened with fresh data
-            setFormData({
-                category: lead?.category || "",
-            })
+            const categoryToUse = resolvedCategory || "";
+
+            setFormData({ category: categoryToUse });
+            setInitialCategory(categoryToUse);
         }
-    }, [open, lead])
+    }, [open, resolvedCategory]);
+
+    // useEffect(() => {
+    //     if (open) {
+    //         // Reset when reopened with fresh data
+    //         setFormData({
+    //             category: lead?.category || "",
+    //         })
+    //     }
+    // }, [open, lead])
 
     const handleChange = (key: keyof typeof formData, value: "" | LeadCategory) => {
         setFormData((prev) => ({ ...prev, [key]: value }))

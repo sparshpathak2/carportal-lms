@@ -67,6 +67,7 @@ export interface Lead {
 
   leadAssignments: LeadAssignment[];
   analytics?: LeadAnalytics | null;
+  leadActivity: LeadActivity[];
 
   adId?: string | null;
   adsetId?: string | null;

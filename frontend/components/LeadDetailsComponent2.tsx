@@ -25,8 +25,6 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
     const [isEditable, setIsEditable] = useState(false)
     const { user } = useContext(SessionContext)
 
-    console.log("user in leadsDeatisl:", user)
-
     // RESOLVE computed values
     const { resolvedStatus, resolvedCategory, resolvedAssignedToName, resolvedLeadLostReason } =
         resolveLeadComputedFields(lead, user) // If you have user, pass here

@@ -4,22 +4,13 @@ import React from "react";
 import { useParams } from "next/navigation";
 import { getActivitiesByLeadId } from "@/features/leads/api/lead";
 import { IconCreditCard, IconFilter, IconSteeringWheel, IconMessage, IconExclamationMark, IconMailForward, IconPhoneOutgoing, IconUserCheck, IconCalendarTime, IconPhoneDone, IconUser, IconAlertCircle, IconUserPlus, IconTarget } from "@tabler/icons-react";
-import { LeadActivity } from "@/lib/types";
+import { Lead, LeadActivity } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { activityTypeColors } from "@/app/constants/constants";
 
-// const activityIcons: Record<string, React.ElementType> = {
-//     COMMENT: MessageSquareText,
-//     CALL: Phone,
-//     MEETING: Handshake,
-//     TEST_DRIVE: Car,
-//     STATUS_UPDATE: Funnel,
-//     ASSIGNMENT: UserCheck,
-//     CALLBACK: PhoneCall,
-//     FINANCE: CreditCard,
-//     EMAIL: Mail,
-//     OTHER: TriangleAlert,
-// };
+type Props = {
+    lead: Lead
+}
 
 const activityIcons: Record<string, React.ElementType> = {
     LEAD_ADDED: IconUserPlus,
@@ -36,23 +27,28 @@ const activityIcons: Record<string, React.ElementType> = {
     OTHER: IconExclamationMark,
 };
 
-export default function LeadActivityHistoryComponent() {
+export default function LeadActivityHistoryComponent({ lead }: Props) {
     const { leadId } = useParams<{ leadId: string }>();
 
+    console.log("lead at leadactivitycomponent:", lead.leadActivity)
+
+    const activities = lead?.leadActivity
+
     // --- React Query ---
-    const { data: activities = [], isLoading, isError } = useQuery<LeadActivity[]>({
-        queryKey: ["leadActivities", leadId],
-        queryFn: async () => {
-            if (!leadId) return [];
-            const res = await getActivitiesByLeadId(leadId);
-            return res.data; // assuming API returns { success, data }
-        },
-        enabled: !!leadId,
-        staleTime: 1000 * 60 * 5,
-    });
+    // const { data: activities = [], isLoading, isError } = useQuery<LeadActivity[]>({
+    //     queryKey: ["leadActivities", leadId],
+    //     queryFn: async () => {
+    //         if (!leadId) return [];
+    //         const res = await getActivitiesByLeadId(leadId);
+    //         return res.data; // assuming API returns { success, data }
+    //     },
+    //     enabled: !!leadId,
+    //     staleTime: 1000 * 60 * 5,
+    // });
 
+    // const activities = lead.
 
-    if (isLoading) return <div>Loading activities...</div>;
+    // if (isLoading) return <div>Loading activities...</div>;
 
     if (activities.length === 0) return (
         // <div className="flex w-full justify-center mt-[10%]">
@@ -67,18 +63,18 @@ export default function LeadActivityHistoryComponent() {
         </div>
     )
 
-    if (isError) return (
-        // <div className="flex w-full justify-center mt-[10%]">
-        <div className="flex w-full h-full justify-center items-center border-dotted border-2">
-            <div className="flex flex-col gap-3 items-center">
-                <IconAlertCircle className="w-8 h-8" />
-                <div className="flex flex-col items-center gap-1">
-                    <div>Error getting the lead activity</div>
-                    {/* <div className="text-sm">The lead could not be found</div> */}
-                </div>
-            </div>
-        </div>
-    )
+    // if (isError) return (
+    //     // <div className="flex w-full justify-center mt-[10%]">
+    //     <div className="flex w-full h-full justify-center items-center border-dotted border-2">
+    //         <div className="flex flex-col gap-3 items-center">
+    //             <IconAlertCircle className="w-8 h-8" />
+    //             <div className="flex flex-col items-center gap-1">
+    //                 <div>Error getting the lead activity</div>
+    //                 {/* <div className="text-sm">The lead could not be found</div> */}
+    //             </div>
+    //         </div>
+    //     </div>
+    // )
 
     // --- Group by month (in descending order) ---
     const grouped = activities.reduce((acc: Record<string, LeadActivity[]>, activity) => {

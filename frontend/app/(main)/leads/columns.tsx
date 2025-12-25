@@ -193,6 +193,8 @@ export const leadsColumns: ColumnDef<Lead>[] = [
             const { user } = useContext(SessionContext)
             const lead = row.original
 
+            console.log("lead at lead columns:", lead)
+
             const { resolvedStatus } = resolveLeadComputedFields(lead, user)
 
             const colorClass =

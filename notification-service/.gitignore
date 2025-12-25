@@ -122,3 +122,8 @@ dist
 /src/generated/prisma
 
 /src/generated/prisma
+
+
+# Ignore PM2 ecosystem files
+ecosystem.config.js
+ecosystem.config.cjs

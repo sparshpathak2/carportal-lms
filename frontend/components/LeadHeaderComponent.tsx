@@ -38,8 +38,6 @@ export default function LeadHeader({ lead, bgColor, firstLetter, statuses, lostR
         resolvedDateCreated
     } = resolveLeadComputedFields(lead, user)
 
-    console.log("resolvedDateCreated:", resolvedDateCreated)
-
     const [isOwnerModalOpen, setOwnerModalOpen] = useState(false)
     const [isStatusModalOpen, setStatusModalOpen] = useState(false)
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false)
