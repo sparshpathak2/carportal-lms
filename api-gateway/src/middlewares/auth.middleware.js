@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const USER_SERVICE_URL = "http://127.0.0.1:3002";
+
 export const authMiddleware = async (req, res, next) => {
     const publicRoutes = ["/login", "/signup"];
 
@@ -16,7 +18,8 @@ export const authMiddleware = async (req, res, next) => {
 
     try {
         const response = await axios.post(
-            `${process.env.USER_SERVICE_URL}/auth/verify-session`,
+            // `${process.env.USER_SERVICE_URL}/auth/verify-session`,
+            `${USER_SERVICE_URL}/auth/verify-session`,
             { sessionId },
             { headers: { Cookie: req.headers.cookie } }
         );
