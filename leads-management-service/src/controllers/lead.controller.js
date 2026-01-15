@@ -64,106 +64,6 @@ export const deleteLead = async (req, res) => {
     }
 };
 
-
-// Bulk upload leads
-// export const bulkUploadLeads = async (req, res) => {
-//     try {
-//         const { data } = req.body;
-
-//         // console.log("data from request body:", data);
-
-//         if (!data || !Array.isArray(data) || data.length === 0) {
-//             return res.status(400).json({ success: false, message: "No data provided" });
-//         }
-
-//         // ✅ Required fields (dealerId is optional)
-//         const REQUIRED_FIELDS = ["name"]; // keep minimal required
-//         for (let i = 0; i < data.length; i++) {
-//             const row = data[i];
-//             const missing = REQUIRED_FIELDS.filter((f) => !(f in row) || !row[f]);
-//             if (missing.length > 0) {
-//                 return res.status(400).json({
-//                     success: false,
-//                     message: `Row ${i + 1} missing fields: ${missing.join(", ")}`
-//                 });
-//             }
-//         }
-
-//         // ✅ Assign nanoid + ensure optional dealerId
-//         const leadsToInsert = data.map((lead) => ({
-//             id: nanoid(10),
-//             name: lead.name,
-//             email: lead.email || null,
-//             phone: lead.phone ? String(lead.phone) : null,
-//             dealerId: lead.dealerId || null, // optional
-//             // statusId: lead.statusId || "New", // fallback if you want a default
-//             statusId: lead.statusId || DEFAULT_STATUS_ID,
-//         }));
-
-//         // ✅ Bulk insert
-//         const inserted = await prisma.lead.createMany({
-//             data: leadsToInsert,
-//             skipDuplicates: true,
-//         });
-
-//         return res.json({ success: true, insertedCount: inserted.count });
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ success: false, message: err.message || "Server Error" });
-//     }
-// };
-
-// Bulk upload leads
-// export const bulkUploadLeads = async (req, res) => {
-//     try {
-//         const { data } = req.body;
-
-//         if (!data || !Array.isArray(data) || data.length === 0) {
-//             return res.status(400).json({ success: false, message: "No data provided" });
-//         }
-
-//         // Minimal required fields
-//         const REQUIRED_FIELDS = ["name"];
-//         for (let i = 0; i < data.length; i++) {
-//             const row = data[i];
-//             const missing = REQUIRED_FIELDS.filter((f) => !(f in row) || !row[f]);
-//             if (missing.length > 0) {
-//                 return res.status(400).json({
-//                     success: false,
-//                     message: `Row ${i + 1} missing fields: ${missing.join(", ")}`
-//                 });
-//             }
-//         }
-
-//         const results = [];
-//         const errors = [];
-
-//         for (let i = 0; i < data.length; i++) {
-//             const leadData = data[i];
-//             try {
-//                 // Call createLead service like in single lead
-//                 const result = await LeadService.createLead({
-//                     leadData,
-//                     user: req.user
-//                 });
-//                 results.push(result.lead);
-//             } catch (err) {
-//                 errors.push({ row: i + 1, error: err.message });
-//             }
-//         }
-
-//         return res.json({
-//             success: true,
-//             insertedCount: results.length,
-//             errors
-//         });
-
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ success: false, message: err.message || "Server Error" });
-//     }
-// };
-
 export const bulkUploadLeads = async (req, res) => {
     try {
         const { data } = req.body;
@@ -192,6 +92,8 @@ export const bulkUploadLeads = async (req, res) => {
 
             // Ensure budget is number
             if (row.budget) row.budget = Number(row.budget);
+
+            // console.log("lead row at bulkUploadLeads:", row)
 
             // Optional: parse createdAt if provided
             if (row.createdAt) {

@@ -6,7 +6,6 @@ class CustomerService {
     // Create or reuse existing customer
     async findOrCreateCustomer(data) {
         const { phone, email, name, alternatePhone, city } = data;
-
         // Check existing by phone OR email
         let customer = await prisma.customer.findFirst({
             where: {

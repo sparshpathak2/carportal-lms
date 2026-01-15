@@ -25,6 +25,8 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
     const [isEditable, setIsEditable] = useState(false)
     const { user } = useContext(SessionContext)
 
+    console.log("lead at LeadDetailsForm:", lead)
+
     // RESOLVE computed values
     const { resolvedStatus, resolvedCategory, resolvedAssignedToName, resolvedLeadLostReason } =
         resolveLeadComputedFields(lead, user) // If you have user, pass here
@@ -286,7 +288,10 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                                 </SelectContent>
                             </Select>
                             :
-                            <div className="py-[6px]">{lead?.testDrive || "-"}</div>
+                            // <div className="py-[6px]">{lead?.testDrive || "-"}</div>
+                            <div className="py-[6px]">
+                                {lead?.testDrive === true ? "Yes" : "No"}
+                            </div>
                         }
                     </div>
 
@@ -310,7 +315,10 @@ export default function LeadDetailsForm({ lead, statuses, lostReasons, updateLea
                                 </SelectContent>
                             </Select>
                             :
-                            <div className="py-[6px]">{lead?.finance || "-"}</div>
+                            // <div className="py-[6px]">{lead?.finance || "-"}</div>
+                            <div className="py-[6px]">
+                                {lead?.finance === true ? "Yes" : "No"}
+                            </div>
                         }
                     </div>
 

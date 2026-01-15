@@ -76,14 +76,14 @@ export const leadsColumns: ColumnDef<Lead>[] = [
         enableSorting: false,
         enableHiding: false,
     },
-    {
-        accessorKey: "id",
-        header: "Lead Id",
-        cell: ({ row }) => (
-            <div className="">{row.getValue("id")}</div>
-        ),
+    // {
+    //     accessorKey: "id",
+    //     header: "Lead Id",
+    //     cell: ({ row }) => (
+    //         <div className="">{row.getValue("id")}</div>
+    //     ),
 
-    },
+    // },
     // {
     //     accessorKey: "name",
     //     header: "Name",
@@ -192,8 +192,6 @@ export const leadsColumns: ColumnDef<Lead>[] = [
         cell: ({ row }) => {
             const { user } = useContext(SessionContext)
             const lead = row.original
-
-            console.log("lead at lead columns:", lead)
 
             const { resolvedStatus } = resolveLeadComputedFields(lead, user)
 

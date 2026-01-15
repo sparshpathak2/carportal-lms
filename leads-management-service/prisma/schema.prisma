@@ -14,85 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model Lead {
-//   id              String       @id
-//   dealerId        String? // reference dealerId from user-service
-//   assignedToId    String? // reference userId from user-service
-//   assignedToName  String? // reference username from user-service
-//   name            String
-//   email           String?
-//   phone           String?
-//   alternatePhone  String?
-//   oldModel        String?
-//   location        String?
-//   city            String?
-//   leadForwardedTo String[] // array of text
-//   testDrive       Boolean      @default(false)
-//   finance         Boolean      @default(false)
-//   occupation      String?
-//   budget          Int?
-//   category        LeadCategory @default(COLD) // 👈 NEW FIELD
-//   source          String?
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   statusId     String?
-//   status       LeadStatus?     @relation(fields: [statusId], references: [id])
-//   lostReasonId String?
-//   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
-
-//   leadActivity LeadActivity[]
-//   comments Comment[]
-// }
-
-// model Lead {
-//   id             String  @id
-//   dealerId       String? // reference dealerId from user-service
-//   assignedToId   String? // reference userId from user-service
-//   assignedToName String? // reference username from user-service
-
-//   name            String
-//   email           String?
-//   phone           String?
-//   alternatePhone  String?
-//   oldModel        String?
-//   location        String?
-//   city            String?
-//   leadForwardedTo String[] // array of text
-
-//   testDrive  Boolean @default(false)
-//   finance    Boolean @default(false)
-//   occupation String?
-//   budget     Int?
-
-//   category LeadCategory @default(COLD)
-//   source   String?
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   statusId String?
-//   status   LeadStatus? @relation(fields: [statusId], references: [id])
-
-//   lostReasonId String?
-//   lostReason   LeadLostReason? @relation(fields: [lostReasonId], references: [id])
-
-//   leadActivity LeadActivity[]
-//   comments Comment[]
-
-//   // ------------------------------------------------------------
-//   // 🎯 NEW FIELDS FOR FACEBOOK MARKETING HIERARCHY
-//   // ------------------------------------------------------------
-//   adId       String? // Facebook ad_id
-//   adsetId    String? // Facebook adset_id
-//   campaignId String? // Facebook campaign_id
-
-//   adName       String? // Facebook ad name
-//   adsetName    String? // Facebook ad set name
-//   campaignName String? // Facebook campaign name
-// }
-
 model Customer {
   id             String   @id
   name           String
@@ -365,18 +286,24 @@ model FbPageToken {
 
 enum LeadActivityType {
   LEAD_ADDED
-  COMMENT // General text note
-  CALL // Phone call
-  MEETING // In-person meeting
-  TEST_DRIVE // Test drive arranged/completed
-  STATUS_UPDATE // Lead status changed
-  CATEGORY_UPDATE // Lead Category changed
-  ASSIGNMENT // Lead forwarded / reassigned
-  CALLBACK // Callback scheduled
-  FINANCE // Finance discussion/activity
-  EMAIL // Email sent
-  OTHER // Catch-all
+  COMMENT
+  CALL
+  MEETING
+  TEST_DRIVE
+  TESTDRIVE_UPDATE
+  FINANCE
+  FINANCE_UPDATE
+  BUDGET_UPDATE
+  OCCUPATION_UPDATE
+  MODEL_UPDATE
+  STATUS_UPDATE
+  CATEGORY_UPDATE
+  ASSIGNMENT
+  CALLBACK
+  EMAIL
+  OTHER
 }
+
 
 enum LeadCategory {
   COLD

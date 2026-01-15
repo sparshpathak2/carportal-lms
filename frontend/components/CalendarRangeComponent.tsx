@@ -21,8 +21,6 @@ export function CalendarRangeComponent({
         setOpen(false);
     };
 
-    console.log("dateRange:", dateRange)
-
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>

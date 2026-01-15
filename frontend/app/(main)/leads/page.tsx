@@ -77,7 +77,6 @@ export default function Page() {
         queryFn: getLeadSources,
     });
 
-    console.log("leadSources:", leadSources)
 
     const filteredData = React.useMemo(() => {
         if (!Array.isArray(allLeads)) return [];
@@ -159,7 +158,7 @@ export default function Page() {
         //     lead.name || "",
         // ]
         const searchable = [
-            lead.id || "",
+            // lead.id || "",
             lead?.customer?.email || "",
             lead?.customer?.phone || lead?.customer?.mobile || "",
             lead?.customer?.name || "",

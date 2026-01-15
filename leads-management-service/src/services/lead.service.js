@@ -67,673 +67,6 @@ async function getActiveAssignment(leadId) {
     });
 }
 
-// export const handleLeadDataUpdate = async ({
-//     data,
-//     existingLead,
-//     userId,
-//     userName,
-//     roleName
-// }) => {
-//     const updateData = {};
-//     const activities = [];
-
-//     const leadId = existingLead.id;
-
-//     // Helper: Push activity with correct old/new field mapping
-//     const pushActivity = ({ type, field, oldVal, newVal }) => {
-//         let mapped = {};
-
-//         switch (type) {
-//             case "CATEGORY_UPDATE":
-//                 mapped.oldCategory = oldVal;
-//                 mapped.newCategory = newVal;
-//                 break;
-//             case "STATUS_UPDATE":
-//                 mapped.oldStatus = oldVal;
-//                 mapped.newStatus = newVal;
-//                 break;
-//             case "LOST_REASON_UPDATE":
-//                 mapped.oldReason = oldVal;
-//                 mapped.newReason = newVal;
-//                 break;
-//             case "ASSIGNMENT":
-//                 mapped.oldAssignee = oldVal;
-//                 mapped.newAssignee = newVal;
-//                 break;
-//         }
-
-//         activities.push({
-//             leadId,
-//             performedById: userId,
-//             performedByName: userName,
-//             type,
-//             description: `${field} changed from '${oldVal ?? "None"}' to '${newVal ?? "None"}'`,
-//             ...mapped
-//         });
-//     };
-
-//     // Helper for simple change detection
-//     const detectChange = (field, newVal, type) => {
-//         const oldVal = existingLead[field];
-
-//         if (newVal !== undefined && newVal !== oldVal) {
-//             pushActivity({ type, field, oldVal, newVal });
-//             updateData[field] = newVal;
-//         }
-//     };
-
-
-//     // ---------------------------------------------------------
-//     // CATEGORY + STATUS (NEW LOGIC: Assignment > Lead)
-//     // ---------------------------------------------------------
-//     const activeAssignment = await getActiveAssignment(existingLead.id);
-
-//     // -------------------------------------
-//     // CATEGORY
-//     // -------------------------------------
-//     // if (data.category && data.category !== existingLead.category) {
-//     //     pushActivity({
-//     //         type: "CATEGORY_UPDATE",
-//     //         field: "category",
-//     //         oldVal: existingLead.category,
-//     //         newVal: data.category
-//     //     });
-//     //     updateData.category = data.category;
-//     // }
-
-//     // -------------------------------------
-//     // UPDATE CATEGORY
-//     // -------------------------------------
-//     if (data.category && data.category !== (activeAssignment?.category || existingLead.category)) {
-//         pushActivity({
-//             type: "CATEGORY_UPDATE",
-//             field: "category",
-//             oldVal: activeAssignment ? activeAssignment.category : existingLead.category,
-//             newVal: data.category
-//         });
-
-//         // if (activeAssignment) {
-//         //     updateData.leadAssignment = { category: data.category };
-//         // } else {
-//         //     updateData.category = data.category;
-//         // }
-
-//         if (activeAssignment) {
-//             updateData.leadAssignments = {
-//                 updateMany: {
-//                     where: { isActive: true },
-//                     data: { category: data.category }
-//                 }
-//             };
-//         } else {
-//             updateData.category = data.category;
-//         }
-
-//     }
-
-//     // -------------------------------------
-//     // UPDATE STATUS
-//     // -------------------------------------
-//     if (data.status) {
-//         const statusObj = await prisma.leadStatus.findUnique({
-//             where: { name: data.status }
-//         });
-
-//         const oldStatusName = activeAssignment
-//             ? activeAssignment.status?.name
-//             : existingLead.status?.name;
-
-//         if (statusObj && statusObj.name !== oldStatusName) {
-//             pushActivity({
-//                 type: "STATUS_UPDATE",
-//                 field: "status",
-//                 oldVal: oldStatusName,
-//                 newVal: statusObj.name
-//             });
-
-//             // if (activeAssignment) {
-//             //     updateData.leadAssignment = {
-//             //         ...(updateData.leadAssignment || {}),
-//             //         statusId: statusObj.id
-//             //     };
-//             // } else {
-//             //     updateData.statusId = statusObj.id;
-//             // }
-
-//             if (activeAssignment) {
-//                 updateData.leadAssignments = {
-//                     updateMany: {
-//                         where: { isActive: true },
-//                         data: { statusId: statusObj.id }
-//                     }
-//                 };
-//             } else {
-//                 updateData.statusId = statusObj.id;
-//             }
-
-
-//             // -----------------------
-//             // LOST REASON
-//             // -----------------------
-//             if (statusObj.name === "Lost" && data.lostReason) {
-//                 const lost = await prisma.leadLostReason.findFirst({
-//                     where: { name: data.lostReason, statusId: statusObj.id }
-//                 });
-
-//                 pushActivity({
-//                     type: "LOST_REASON_UPDATE",
-//                     field: "lostReason",
-//                     oldVal: activeAssignment
-//                         ? activeAssignment.status?.lostReason?.name
-//                         : existingLead.lostReason?.name,
-//                     newVal: data.lostReason
-//                 });
-
-//                 // if (activeAssignment) {
-//                 //     updateData.leadAssignment = {
-//                 //         ...(updateData.leadAssignment || {}),
-//                 //         lostReasonId: lost?.id || null,
-//                 //     };
-//                 // } else {
-//                 //     updateData.lostReasonId = lost?.id || null;
-//                 // }
-
-//                 if (activeAssignment) {
-//                     updateData.leadAssignments = {
-//                         updateMany: {
-//                             where: { isActive: true },
-//                             data: { lostReasonId: lost?.id || null }
-//                         }
-//                     };
-//                 } else {
-//                     updateData.lostReasonId = lost?.id || null;
-//                 }
-
-//             } else {
-//                 // RESET lostReason if not Lost
-//                 if (activeAssignment) {
-//                     updateData.leadAssignments = {
-//                         updateMany: {
-//                             where: { isActive: true },
-//                             data: { lostReasonId: null }
-//                         }
-//                     };
-//                 } else {
-//                     updateData.lostReasonId = null;
-//                 }
-
-
-//             }
-//         }
-//     }
-
-//     // -------------------------------------
-//     // BOOLEAN FIELDS (Test Drive, Finance)
-//     // -------------------------------------
-//     const testDriveVal = data.testDrive === true || data.testDrive === "Yes";
-//     detectChange("testDrive", testDriveVal, "TESTDRIVE_UPDATE");
-
-//     const financeVal = data.finance === true || data.finance === "Yes";
-//     detectChange("finance", financeVal, "FINANCE_UPDATE");
-
-//     // -------------------------------------
-//     // BUDGET
-//     // -------------------------------------
-//     if (data.budget) {
-//         const newBudget = parseInt(data.budget);
-//         detectChange("budget", newBudget, "BUDGET_UPDATE");
-//     }
-
-//     // -------------------------------------
-//     // OCCUPATION / SOURCE / MODEL
-//     // -------------------------------------
-//     detectChange("occupation", data.occupation, "OCCUPATION_UPDATE");
-//     detectChange("source", data.source, "SOURCE_UPDATE");
-//     detectChange("oldModel", data.oldModel, "MODEL_UPDATE");
-
-//     // -------------------------------------
-//     // FB / Google Ads Tracking IDs
-//     // -------------------------------------
-//     const adFields = [
-//         "adId",
-//         "adsetId",
-//         "campaignId",
-//         "adName",
-//         "adsetName",
-//         "campaignName"
-//     ];
-
-//     adFields.forEach(field => {
-//         if (data[field] !== undefined && data[field] !== existingLead[field]) {
-//             pushActivity({
-//                 type: "AD_FIELD_UPDATE",
-//                 field,
-//                 oldVal: existingLead[field],
-//                 newVal: data[field]
-//             });
-//             updateData[field] = data[field];
-//         }
-//     });
-
-//     return { updateData, activities };
-// };
-
-// export const handleLeadDataUpdate = async ({
-//     data,
-//     existingLead,
-//     userId,
-//     userName,
-//     roleName
-// }) => {
-//     const updateData = {};
-//     const activities = [];
-//     const leadId = existingLead.id;
-
-//     // ============================================================
-//     // HELPERS
-//     // ============================================================
-
-//     const pushActivity = ({ type, field, oldVal, newVal }) => {
-//         const mapped = {};
-
-//         switch (type) {
-//             case "CATEGORY_UPDATE":
-//                 mapped.oldCategory = oldVal;
-//                 mapped.newCategory = newVal;
-//                 break;
-//             case "STATUS_UPDATE":
-//                 mapped.oldStatus = oldVal;
-//                 mapped.newStatus = newVal;
-//                 break;
-//             case "LOST_REASON_UPDATE":
-//                 mapped.oldReason = oldVal;
-//                 mapped.newReason = newVal;
-//                 break;
-//             case "ASSIGNMENT":
-//                 mapped.oldAssignee = oldVal;
-//                 mapped.newAssignee = newVal;
-//                 break;
-//         }
-
-//         activities.push({
-//             leadId,
-//             performedById: userId,
-//             performedByName: userName,
-//             type,
-//             description: `${field} changed from '${oldVal ?? "None"}' to '${newVal ?? "None"}'`,
-//             ...mapped
-//         });
-//     };
-
-//     const detectChange = (field, newVal, type) => {
-//         const oldVal = existingLead[field];
-//         if (newVal !== undefined && newVal !== oldVal) {
-//             pushActivity({ type, field, oldVal, newVal });
-//             updateData[field] = newVal;
-//         }
-//     };
-
-//     // merge all nested assignment updates
-//     const pushToAssignmentUpdate = (patch) => {
-//         if (!updateData.leadAssignments) {
-//             updateData.leadAssignments = {
-//                 updateMany: {
-//                     where: { isActive: true },
-//                     data: {}
-//                 }
-//             };
-//         }
-
-//         Object.assign(updateData.leadAssignments.updateMany.data, patch);
-//     };
-
-//     // ============================================================
-//     // ASSIGNMENT FETCH
-//     // ============================================================
-//     const activeAssignment = await getActiveAssignment(existingLead.id);
-
-//     const currentCategory = activeAssignment?.category ?? existingLead.category;
-//     const currentStatusName = activeAssignment?.status?.name ?? existingLead.status?.name;
-//     const currentLostReason = activeAssignment?.status?.lostReason?.name ?? existingLead.lostReason?.name;
-
-//     // ============================================================
-//     // CATEGORY UPDATE
-//     // ============================================================
-//     if (data.category && data.category !== currentCategory) {
-//         pushActivity({
-//             type: "CATEGORY_UPDATE",
-//             field: "category",
-//             oldVal: currentCategory,
-//             newVal: data.category
-//         });
-
-//         if (activeAssignment) {
-//             pushToAssignmentUpdate({ category: data.category });
-//         } else {
-//             updateData.category = data.category;
-//         }
-//     }
-
-//     // ============================================================
-//     // STATUS UPDATE
-//     // ============================================================
-//     if (data.status) {
-//         const statusObj = await prisma.leadStatus.findUnique({
-//             where: { name: data.status }
-//         });
-
-//         if (!statusObj) {
-//             console.warn("Invalid status name:", data.status);
-//         } else if (statusObj.name !== currentStatusName) {
-//             pushActivity({
-//                 type: "STATUS_UPDATE",
-//                 field: "status",
-//                 oldVal: currentStatusName,
-//                 newVal: statusObj.name
-//             });
-
-//             if (activeAssignment) {
-//                 pushToAssignmentUpdate({ statusId: statusObj.id });
-//             } else {
-//                 updateData.statusId = statusObj.id;
-//             }
-
-//             // ---------------------------------------------------
-//             // LOST REASON HANDLING
-//             // ---------------------------------------------------
-
-//             // 1. If status is Lost -> assign reason
-//             if (statusObj.name === "Lost" && data.lostReason) {
-//                 const lostObj = await prisma.leadLostReason.findFirst({
-//                     where: { name: data.lostReason, statusId: statusObj.id }
-//                 });
-
-//                 pushActivity({
-//                     type: "STATUS_UPDATE",
-//                     field: "lostReason",
-//                     oldVal: currentLostReason,
-//                     newVal: data.lostReason
-//                 });
-
-//                 const lostId = lostObj?.id ?? null;
-
-//                 if (activeAssignment) {
-//                     pushToAssignmentUpdate({ lostReasonId: lostId });
-//                 } else {
-//                     updateData.lostReasonId = lostId;
-//                 }
-
-//             } else {
-//                 // 2. Any other status → reset lost reason
-//                 pushActivity({
-//                     type: "STATUS_UPDATE",
-//                     field: "lostReason",
-//                     oldVal: currentLostReason,
-//                     newVal: null
-//                 });
-
-//                 if (activeAssignment) {
-//                     pushToAssignmentUpdate({ lostReasonId: null });
-//                 } else {
-//                     updateData.lostReasonId = null;
-//                 }
-//             }
-//         }
-//     }
-
-//     // ============================================================
-//     // BOOLEAN FIELDS
-//     // ============================================================
-//     const testDriveVal = data.testDrive === true || data.testDrive === "Yes";
-//     detectChange("testDrive", testDriveVal, "TESTDRIVE_UPDATE");
-
-//     const financeVal = data.finance === true || data.finance === "Yes";
-//     detectChange("finance", financeVal, "FINANCE_UPDATE");
-
-//     // ============================================================
-//     // BUDGET
-//     // ============================================================
-//     if (data.budget) {
-//         detectChange("budget", parseInt(data.budget), "BUDGET_UPDATE");
-//     }
-
-//     // ============================================================
-//     // SIMPLE FIELDS
-//     // ============================================================
-//     detectChange("occupation", data.occupation, "OCCUPATION_UPDATE");
-//     detectChange("source", data.source, "SOURCE_UPDATE");
-//     detectChange("oldModel", data.oldModel, "MODEL_UPDATE");
-
-//     // ============================================================
-//     // AD FIELDS
-//     // ============================================================
-//     [
-//         "adId",
-//         "adsetId",
-//         "campaignId",
-//         "adName",
-//         "adsetName",
-//         "campaignName"
-//     ].forEach((field) => {
-//         if (data[field] !== undefined && data[field] !== existingLead[field]) {
-//             pushActivity({
-//                 type: "AD_FIELD_UPDATE",
-//                 field,
-//                 oldVal: existingLead[field],
-//                 newVal: data[field]
-//             });
-//             updateData[field] = data[field];
-//         }
-//     });
-
-//     return { updateData, activities };
-// };
-
-// export const handleLeadAssignment = async ({
-//     existingLead,
-//     data,
-//     userId,
-//     userName
-// }) => {
-
-//     if (!data.assignedToId) return null;
-
-//     // FIX HERE 👇
-//     const currentAssignment = existingLead.leadAssignments?.find(a => a.isActive) || null;
-
-//     if (currentAssignment && currentAssignment.assignedToId === data.assignedToId) {
-//         return null;
-//     }
-
-//     const dealerId =
-//         data.dealerId ||
-//         currentAssignment?.dealerId ||
-//         existingLead.customer?.dealerId ||
-//         "";
-
-//     if (!dealerId) {
-//         throw new Error("dealerId is required for LeadDealerAssignment");
-//     }
-
-//     // Deactivate old assignment
-//     await prisma.leadAssignment.updateMany({
-//         where: { leadId: existingLead.id, isActive: true },
-//         data: { isActive: false }
-//     });
-
-//     const hadExistingAssignment = currentAssignment !== null;
-
-
-//     // ----------------------------------------------------
-//     // 👇 NEW: Fetch assignedToName & assignedByName
-//     // ----------------------------------------------------
-//     let assignedToName = "";
-//     let assignedByName = "";
-
-//     try {
-//         const assignedToUser = await fetchUser(data.assignedToId);
-//         assignedToName = assignedToUser?.name || "";
-//     } catch (err) {
-//         console.error("Failed to fetch assignedToName", err);
-//     }
-
-//     try {
-//         const assignedByUser = await fetchUser(userId);
-//         assignedByName = assignedByUser?.name || "";
-//     } catch (err) {
-//         // Fallback to name passed from client session
-//         assignedByName = userName;
-//     }
-
-//     const newAssignment = await prisma.leadAssignment.create({
-//         data: {
-//             leadId: existingLead.id,
-//             dealerId,
-//             assignedToId: data.assignedToId,
-//             assignedById: userId,
-//             assignedToName: assignedToName,
-//             assignedByName: assignedByName,
-//             isActive: true,
-//         }
-//     });
-
-//     // FIX — now this ONLY runs on leads with ZERO previous assignments
-//     if (!hadExistingAssignment) {
-//         await prisma.comment.updateMany({
-//             where: {
-//                 leadId: existingLead.id,
-//                 leadAssignmentId: null,   // SUPER IMPORTANT!
-//             },
-//             data: { leadAssignmentId: newAssignment.id }
-//         });
-//     }
-
-//     const assignmentActivity = {
-//         leadId: existingLead.id,
-//         type: "ASSIGNMENT",
-//         performedById: userId,
-//         performedByName: userName,
-//         leadAssignmentId: newAssignment.id,
-//         description: `Lead forwarded to dealer user ${assignedToName}`,
-//         oldAssignee: currentAssignment?.assignedToId ?? null,
-//         newAssignee: data.assignedToId
-//     };
-
-//     return { newAssignment, assignmentActivity };
-// };
-
-// export const handleLeadAssignment = async ({
-//     existingLead,
-//     data,
-//     userId,
-//     userName
-// }) => {
-
-//     if (!data.assignedToId) return null;
-
-//     // Active assignment (if any)
-//     const currentAssignment =
-//         existingLead.leadAssignments?.find(a => a.isActive) || null;
-
-//     // No change → exit
-//     if (currentAssignment && currentAssignment.assignedToId === data.assignedToId) {
-//         return null;
-//     }
-
-//     const dealerId =
-//         data.dealerId ||
-//         currentAssignment?.dealerId ||
-//         existingLead.customer?.dealerId ||
-//         "";
-
-//     if (!dealerId) {
-//         throw new Error("dealerId is required for LeadAssignment");
-//     }
-
-//     // ----------------------------------------
-//     // Detect FIRST assignment ever
-//     // ----------------------------------------
-//     const hadAnyAssignment =
-//         existingLead.leadAssignments &&
-//         existingLead.leadAssignments.length > 0;
-
-//     // ----------------------------------------
-//     // Deactivate existing active assignments
-//     // ----------------------------------------
-//     await prisma.leadAssignment.updateMany({
-//         where: {
-//             leadId: existingLead.id,
-//             isActive: true
-//         },
-//         data: { isActive: false }
-//     });
-
-//     // ----------------------------------------
-//     // Fetch names
-//     // ----------------------------------------
-//     let assignedToName = "";
-//     let assignedByName = userName;
-
-//     try {
-//         const assignedToUser = await fetchUser(data.assignedToId);
-//         assignedToName = assignedToUser?.name || "";
-//     } catch { }
-
-//     try {
-//         const assignedByUser = await fetchUser(userId);
-//         assignedByName = assignedByUser?.name || assignedByName;
-//     } catch { }
-
-//     // ----------------------------------------
-//     // ✅ CREATE assignment WITH DEFAULTS
-//     // ----------------------------------------
-//     const newAssignment = await prisma.leadAssignment.create({
-//         data: {
-//             leadId: existingLead.id,
-//             dealerId,
-//             assignedToId: data.assignedToId,
-//             assignedToName,
-//             assignedById: userId,
-//             assignedByName,
-//             isActive: true,
-
-//             // 🔥 DEFAULTS ONLY FOR FIRST ASSIGNMENT
-//             statusId: hadAnyAssignment ? undefined : DEFAULT_STATUS_ID,
-//             category: hadAnyAssignment ? undefined : DEFAULT_CATEGORY,
-//             status: hadAnyAssignment ? undefined : DEFAULT_STATUS,
-//         }
-//     });
-
-//     // ----------------------------------------
-//     // Move legacy comments ONLY for first assignment
-//     // ----------------------------------------
-//     if (!hadAnyAssignment) {
-//         await prisma.comment.updateMany({
-//             where: {
-//                 leadId: existingLead.id,
-//                 leadAssignmentId: null
-//             },
-//             data: { leadAssignmentId: newAssignment.id }
-//         });
-//     }
-
-//     // ----------------------------------------
-//     // Activity
-//     // ----------------------------------------
-//     const assignmentActivity = {
-//         leadId: existingLead.id,
-//         type: "ASSIGNMENT",
-//         performedById: userId,
-//         performedByName: userName,
-//         leadAssignmentId: newAssignment.id,
-//         description: `Lead forwarded to dealer user ${assignedToName}`,
-//         oldAssignee: currentAssignment?.assignedToId ?? null,
-//         newAssignee: data.assignedToId
-//     };
-
-//     return { newAssignment, assignmentActivity };
-// };
-
 export const handleLeadDataUpdate = async ({
     data,
     existingLead,
@@ -744,6 +77,8 @@ export const handleLeadDataUpdate = async ({
     const updateData = {};
     const activities = [];
     const leadId = existingLead.id;
+    const customerUpdateData = {};
+
 
     // ============================================================
     // HELPERS
@@ -919,18 +254,24 @@ export const handleLeadDataUpdate = async ({
     // ============================================================
     // BOOLEAN FIELDS
     // ============================================================
-    const testDriveVal = data.testDrive === true || data.testDrive === "Yes";
-    detectChange("testDrive", testDriveVal, "TESTDRIVE_UPDATE");
+    if (data.testDrive !== undefined) {
+        const testDriveVal = data.testDrive === true || data.testDrive === "Yes";
+        detectChange("testDrive", testDriveVal, "TESTDRIVE_UPDATE");
+    }
 
-    const financeVal = data.finance === true || data.finance === "Yes";
-    detectChange("finance", financeVal, "FINANCE_UPDATE");
+    if (data.finance !== undefined) {
+        const financeVal = data.finance === true || data.finance === "Yes";
+        detectChange("finance", financeVal, "FINANCE_UPDATE");
+    }
+
 
     // ============================================================
     // BUDGET
     // ============================================================
-    if (data.budget) {
-        detectChange("budget", parseInt(data.budget), "BUDGET_UPDATE");
+    if (data.budget !== undefined) {
+        detectChange("budget", Number(data.budget), "BUDGET_UPDATE");
     }
+
 
     // ============================================================
     // SIMPLE FIELDS
@@ -938,6 +279,14 @@ export const handleLeadDataUpdate = async ({
     detectChange("occupation", data.occupation, "OCCUPATION_UPDATE");
     detectChange("source", data.source, "SOURCE_UPDATE");
     detectChange("oldModel", data.oldModel, "MODEL_UPDATE");
+    if (data.alternatePhone !== undefined && data.alternatePhone !== existingLead.customer?.alternatePhone) {
+        customerUpdateData.alternatePhone = data.alternatePhone;
+    }
+
+    if (data.city !== undefined && data.city !== existingLead.customer?.city) {
+        customerUpdateData.city = data.city;
+    }
+
 
     // ============================================================
     // AD FIELDS
@@ -960,6 +309,14 @@ export const handleLeadDataUpdate = async ({
             updateData[field] = data[field];
         }
     });
+
+    if (Object.keys(customerUpdateData).length > 0) {
+        await prisma.customer.update({
+            where: { id: existingLead.customerId },
+            data: customerUpdateData
+        });
+    }
+
 
     return { updateData, activities };
 };
@@ -1409,7 +766,7 @@ class LeadService {
                 adName: leadData.adName,
                 adsetName: leadData.adsetName,
                 campaignName: leadData.campaignName,
-                createdAt: finalCreatedAt,
+                createdAt: finalCreatedAt || undefined,
             },
             include: {
                 customer: true,

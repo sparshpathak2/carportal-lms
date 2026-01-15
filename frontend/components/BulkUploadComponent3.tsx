@@ -18,7 +18,7 @@ import { bulkUploadLeads } from "@/features/leads/api/lead"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 // Required columns in sheet
-const REQUIRED_COLUMNS = ["name", "email", "phone"]
+const REQUIRED_COLUMNS = ["name", "phone"]
 
 type Lead = {
     name: string
@@ -122,18 +122,15 @@ export function BulkUploadComponent({
                 return
             }
 
-            // ✅ Normalize rows and map to Lead[]
-            const validData: Lead[] = jsonData.map((row: any) => {
+            const validData = jsonData.map((row: any) => {
                 const normalizedRow: any = {}
                 Object.keys(row).forEach((key) => {
-                    normalizedRow[key.toLowerCase()] = row[key]
+                    normalizedRow[key.trim()] = row[key] // preserve original casing
                 })
-                return {
-                    name: normalizedRow.name,
-                    email: normalizedRow.email,
-                    phone: normalizedRow.phone,
-                }
+                return normalizedRow
             })
+
+
 
             // ✅ Send to backend
             mutation.mutate(validData)
@@ -144,8 +141,18 @@ export function BulkUploadComponent({
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+        <Dialog
+            open={open}
+            // onOpenChange={onOpenChange}
+            onOpenChange={(val) => {
+                if (!mutation.isPending) onOpenChange(val);
+            }}
+        >
+            <DialogContent
+                className="sm:max-w-[425px]"
+                onInteractOutside={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle>Bulk Upload Leads</DialogTitle>
                     <DialogDescription>
@@ -158,11 +165,23 @@ export function BulkUploadComponent({
                 </div>
 
                 <DialogFooter>
-                    <DialogClose asChild>
+                    {/* <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
+                    </DialogClose> */}
+                    <DialogClose asChild>
+                        <Button variant="outline" disabled={mutation.isPending}>
+                            Cancel
+                        </Button>
                     </DialogClose>
-                    <Button type="button" onClick={handleUpload}>
+                    {/* <Button type="button" onClick={handleUpload}>
                         Upload
+                    </Button> */}
+                    <Button
+                        type="button"
+                        onClick={handleUpload}
+                        disabled={mutation.isPending}
+                    >
+                        {mutation.isPending ? "Uploading..." : "Upload"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
